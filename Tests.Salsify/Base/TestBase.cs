@@ -1,32 +1,46 @@
 ﻿using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Microsoft.Extensions.Configuration;
+using Tests.Salsify.Base;
 
-namespace Tests.Salsify.Base;
 public class TestBase
 {
-    public IEnumerable<AuthenticationCredentialsProvider> Creds { get; set; }
-
-    public InvocationContext InvocationContext { get; set; }
+    public static List<IEnumerable<AuthenticationCredentialsProvider>> CredentialGroups { get; private set; }
+    
+    public static List<InvocationContext> InvocationContexts { get; private set; }
+    
+    public TestContext? TestContext { get; set; }
 
     public FileManager FileManager { get; set; }
 
-    public TestBase()
+    static TestBase()
     {
         var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-        Creds = config.GetSection("ConnectionDefinition").GetChildren()
-            .Select(x => new AuthenticationCredentialsProvider(x.Key, x.Value)).ToList();
+        
+        CredentialGroups = config.GetSection("ConnectionDefinition")
+            .GetChildren()
+            .Select(section =>
+                section.GetChildren()
+                    .Select(child => new AuthenticationCredentialsProvider(child.Key, child.Value ?? string.Empty))
+            )
+            .ToList();
 
-
-        var relativePath = config.GetSection("TestFolder").Value;
-        var projectDirectory = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.FullName;
-        var folderLocation = Path.Combine(projectDirectory, relativePath);
-
-        InvocationContext = new InvocationContext
+        InvocationContexts = CredentialGroups.Select(group => new InvocationContext
         {
-            AuthenticationCredentialsProviders = Creds,
-        };
-
+            AuthenticationCredentialsProviders = group
+        }).ToList();
+    }
+    
+    public TestBase()
+    {
         FileManager = new FileManager();
+    }
+    
+    public InvocationContext GetInvocationContext(string connectionType)
+    {
+        var context = InvocationContexts.FirstOrDefault(x => 
+            x.AuthenticationCredentialsProviders.Any(y => y.Value == connectionType));
+            
+        return context ?? throw new Exception($"Invocation context not found for: {connectionType}");
     }
 }

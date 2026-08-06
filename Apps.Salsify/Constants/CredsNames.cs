@@ -2,5 +2,7 @@ namespace Apps.Salsify.Constants;
 
 public static class CredsNames
 {
-    public const string Token = "token";
+    public const string ConnectionType = "ConnectionType";
+    public const string ApiToken = "ApiToken";
+    public const string OrgId = "OrgId";
 }
