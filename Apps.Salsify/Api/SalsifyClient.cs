@@ -1,5 +1,8 @@
+using Apps.Salsify.Api.Utility;
 using Apps.Salsify.Authenticators;
 using Apps.Salsify.Constants;
+using Apps.Salsify.Models.Utility.Error;
+using Apps.Salsify.Models.Utility.Pagination;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
@@ -11,36 +14,83 @@ namespace Apps.Salsify.Api;
 
 public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds) : BlackBirdRestClient(new()
 {
-    BaseUrl = new Uri(GetBaseUrl(creds)),
-    Authenticator = new ApiTokenAuthenticator(creds)
+    BaseUrl = new Uri(ApiRoot),
+    Authenticator = new ApiTokenAuthenticator(creds),
+    ConfigureMessageHandler = inner => new MethodOverrideHandler(inner) // RestSharp does not support the REPORT HTTP method, so this exists
 })
 {
     private readonly string _orgId = creds.Get(CredsNames.OrgId).Value.Trim();
     private const string ApiRoot = "https://app.salsify.com/api";
-    private const string DefaultApiVersion = "v1";
 
-    private static string GetBaseUrl(IEnumerable<AuthenticationCredentialsProvider> creds)
+    public async Task<List<TItem>> Paginate<TResponse, TItem>(Func<int, RestRequest> request)
+        where TResponse : PaginatedResponse<TItem>
     {
-        return $"{ApiRoot}/{DefaultApiVersion}/orgs/{creds.Get(CredsNames.OrgId).Value.Trim()}";
-    }
+        var all = new List<TItem>();
 
-    public override Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
-    {
-        if (request is SalsifyRequest { ApiVersion: { } version } && 
-            version != DefaultApiVersion && 
-            !request.Resource.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        for (int page = 1; page <= 100; page++)
         {
-            request.Resource = $"{ApiRoot}/{version}/orgs/{_orgId}/{request.Resource.TrimStart('/')}";
+            var response = await ExecuteWithErrorHandling<TResponse>(request(page));
+            if (response.Items.Count == 0) 
+                break;
+            
+            all.AddRange(response.Items);
+
+            if (response.Meta is not { } meta) 
+                break;
+            
+            if (all.Count >= meta.TotalEntries) 
+                break;
         }
 
+        return all;
+    }
+    
+    public override async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)
+    {
+        PrepareRequest(request);
+        return await base.ExecuteWithErrorHandling<T>(request);
+    }
+    
+    public override Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
+    {
+        PrepareRequest(request);
         return base.ExecuteWithErrorHandling(request);
+    }
+
+    private void PrepareRequest(RestRequest request)
+    {
+        if (request is not SalsifyRequest salsify || salsify.Prepared) 
+            return;
+
+        string segment = salsify.ApiVersion switch
+        {
+            ApiVersion.V1 => "v1/",
+            ApiVersion.Internal => string.Empty,
+            _ => throw new PluginApplicationException(nameof(salsify.ApiVersion))
+        };
+
+        request.Resource = $"{segment}orgs/{_orgId}/{request.Resource.TrimStart('/')}";
+
+        if (salsify.OverrideVerb is { } verb)
+            request.AddOrUpdateHeader(MethodOverrideHandler.HeaderName, verb);
+
+        salsify.Prepared = true;
     }
 
     protected override Exception ConfigureErrorException(RestResponse response)
     {
-        var error = JsonConvert.DeserializeObject(response.Content);
-        var errorMessage = "";
-
-        throw new PluginApplicationException(errorMessage);
+        string statusCodePart = $"Status code {response.StatusCode} ({(int)response.StatusCode}).";
+        if (string.IsNullOrWhiteSpace(response.Content))
+            return new PluginApplicationException($"{statusCodePart} Server returned no content");
+        
+        var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
+        string? singleError = error?.Error;
+        string? multipleErrors = string.Join("; ", error?.Errors ?? []);
+        
+        if (!string.IsNullOrWhiteSpace(singleError))
+            return new PluginApplicationException(singleError);
+        if (!string.IsNullOrWhiteSpace(multipleErrors))
+            return new PluginApplicationException(multipleErrors);
+        return new PluginApplicationException($"{statusCodePart} Could not deserialize error. Raw: {response.Content}");
     }
 }

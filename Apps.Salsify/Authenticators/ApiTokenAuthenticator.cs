@@ -11,7 +11,7 @@ public class ApiTokenAuthenticator(IEnumerable<AuthenticationCredentialsProvider
     public ValueTask Authenticate(IRestClient client, RestRequest request)
     {
         string apiToken = creds.Get(CredsNames.ApiToken).Value;
-        request.AddHeader("Authorization", $"Bearer {apiToken}");
+        request.AddOrUpdateHeader("Authorization", $"Bearer {apiToken}");
         return ValueTask.CompletedTask;
     }
 }

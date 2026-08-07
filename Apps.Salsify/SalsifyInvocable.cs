@@ -10,9 +10,9 @@ public class SalsifyInvocable : BaseInvocable
     protected AuthenticationCredentialsProvider[] Creds =>
         InvocationContext.AuthenticationCredentialsProviders.ToArray();
 
-    protected SalsifyClient SalsifyClient { get; }
+    protected SalsifyClient Client { get; }
     public SalsifyInvocable(InvocationContext invocationContext) : base(invocationContext)
     {
-        SalsifyClient = new(Creds);
+        Client = new(Creds);
     }
 }

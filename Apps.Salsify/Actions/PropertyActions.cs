@@ -1,0 +1,34 @@
+using Apps.Salsify.Api;
+using Apps.Salsify.Api.Utility;
+using Apps.Salsify.Extensions;
+using Apps.Salsify.Models.Entities.Properties;
+using Apps.Salsify.Models.Requests.Property;
+using Apps.Salsify.Models.Responses.Property;
+using Apps.Salsify.Models.Responses.Property.Api;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Invocation;
+using RestSharp;
+
+namespace Apps.Salsify.Actions;
+
+[ActionList("Properties")]
+public class PropertyActions(InvocationContext invocationContext) : SalsifyInvocable(invocationContext)
+{
+    [Action("Search properties", Description = "Search properties available in the organization")]
+    public async Task<SearchPropertiesResponse> SearchProperties([ActionParameter] SearchPropertiesRequest input)
+    {
+        // This endpoint is not in the docs. It's accessible from DevTools
+        // To access it, go to the UI homepage (product list) -> Customize View
+        var properties = await Client.Paginate<ListPropertiesResponse, PropertyListEntity>(page =>
+            new SalsifyRequest("properties", apiVersion: ApiVersion.Internal)
+                .AddQueryParameter("use_new_serialization_format", "true")
+                .AddQueryParameter("serialize_system_ids", "true")
+                .AddQueryParameter("query_context", "name")
+                .AddQueryParameterIfNotEmpty("query", input.NameContains)
+                .AddQueryParameter("page", page.ToString()));
+        
+        var result = properties.Select(x => new PropertyListResponse(x)).ToArray();
+        return new(result);
+    }
+}
