@@ -23,7 +23,7 @@ public class PropertyActions(InvocationContext invocationContext) : SalsifyInvoc
     {
         // This endpoint is not in the docs. It's accessible from DevTools
         // To access it, go to the UI homepage (product list) -> Customize View
-        var properties = await Client.Paginate<ListPropertiesResponse, PropertyListEntity>(page =>
+        var properties = await Client.PaginateOffset<ListPropertiesResponse, PropertyListEntity>(page =>
             new SalsifyRequest("properties", apiVersion: ApiVersion.Internal)
                 .AddQueryParameter("use_new_serialization_format", "true")
                 .AddQueryParameter("serialize_system_ids", "true")

@@ -9,7 +9,10 @@ public class PaginationMeta
 
     [JsonProperty("per_page")]
     public int PerPage { get; set; }
-
+    
+    [JsonProperty("cursor")]
+    public string? Cursor { get; set; }
+    
     [JsonProperty("total_entries")]
     public int TotalEntries { get; set; }
 }

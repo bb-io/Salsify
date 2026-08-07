@@ -22,7 +22,7 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
     private readonly string _orgId = creds.Get(CredsNames.OrgId).Value.Trim();
     private const string ApiRoot = "https://app.salsify.com/api";
 
-    public async Task<List<TItem>> Paginate<TResponse, TItem>(Func<int, RestRequest> request, int? paginateTimes = null)
+    public async Task<List<TItem>> PaginateOffset<TResponse, TItem>(Func<int, RestRequest> request, int? paginateTimes = null)
         where TResponse : PaginatedResponse<TItem>
     {
         var all = new List<TItem>();
@@ -41,6 +41,35 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
             
             if (all.Count >= meta.TotalEntries) 
                 break;
+        }
+
+        return all;
+    }
+    
+    public async Task<List<TItem>> PaginateCursor<TResponse, TItem>(Func<string?, RestRequest> request, int? paginateTimes = null)
+        where TResponse : PaginatedResponse<TItem>
+    {
+        var all = new List<TItem>();
+        int limit = paginateTimes ?? 100;
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        
+        string? cursor = null;
+
+        for (var i = 0; i < limit; i++)
+        {
+            var response = await ExecuteWithErrorHandling<TResponse>(request(cursor));
+            all.AddRange(response.Items);
+
+            if (response.Meta is not { } meta)
+                break;
+            
+            cursor = meta.Cursor;
+            if (string.IsNullOrEmpty(cursor))
+                break;
+
+            // Not a user-facing error, that's why it's just Exception
+            if (!seen.Add(cursor))
+                throw new Exception($"Pagination stalled: cursor '{cursor}' was returned twice after {all.Count} items.");
         }
 
         return all;
