@@ -38,4 +38,23 @@ public class PropertyActionTests : TestBaseMultipleConnections
         PrintResult(response);
         Assert.IsNotNull(response);
     }
+
+    [TestMethod, TargetConnections]
+    public async Task CreateProperty_ReturnsCreatedProperty(InvocationContext context)
+    {
+        // Arrange
+        var actions = new PropertyActions(context);
+        var input = new CreatePropertyRequest
+        {
+            PropertyId = "your-new-property",
+            Type = "boolean"
+        };
+
+        // Act
+        var response = await actions.CreateProperty(input);
+
+        // Assert
+        PrintResult(response);
+        Assert.IsNotNull(response);
+    }
 }

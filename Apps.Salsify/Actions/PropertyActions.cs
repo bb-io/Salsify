@@ -9,6 +9,8 @@ using Apps.Salsify.Models.Responses.Property.Api;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Extensions.Http;
+using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using RestSharp;
 
 namespace Apps.Salsify.Actions;
@@ -33,10 +35,27 @@ public class PropertyActions(InvocationContext invocationContext) : SalsifyInvoc
         return new(result);
     }
 
+    // https://developers.salsify.com/reference/read-property
     [Action("Get property", Description = "Get details for a specific property")]
     public async Task<PropertyResponse> GetProperty([ActionParameter] PropertyIdentifier propertyIdentifier)
     {
         var request = new SalsifyRequest($"properties/{propertyIdentifier.PropertyId}");
+        var response = await Client.ExecuteWithErrorHandling<PropertyEntity>(request);
+        return new(response);
+    }
+
+    // https://developers.salsify.com/reference/create-new-property
+    [Action("Create property", Description = "Create a new property")]
+    public async Task<PropertyResponse> CreateProperty([ActionParameter] CreatePropertyRequest createInput)
+    {
+        var body = new Dictionary<string, string?>
+        {
+            { "salsify:id", createInput.PropertyId },
+            { "salsify:name", createInput.Name },
+            { "salsify:data_type", createInput.Type },
+        }.AllIsNotNull<string, string?>();
+
+        var request = new SalsifyRequest("properties", Method.Post).WithJsonBody(body);
         var response = await Client.ExecuteWithErrorHandling<PropertyEntity>(request);
         return new(response);
     }
