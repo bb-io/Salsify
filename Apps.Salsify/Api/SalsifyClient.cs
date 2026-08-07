@@ -22,12 +22,13 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
     private readonly string _orgId = creds.Get(CredsNames.OrgId).Value.Trim();
     private const string ApiRoot = "https://app.salsify.com/api";
 
-    public async Task<List<TItem>> Paginate<TResponse, TItem>(Func<int, RestRequest> request)
+    public async Task<List<TItem>> Paginate<TResponse, TItem>(Func<int, RestRequest> request, int? paginateTimes = null)
         where TResponse : PaginatedResponse<TItem>
     {
         var all = new List<TItem>();
 
-        for (int page = 1; page <= 100; page++)
+        int finalPaginateTimes = paginateTimes ?? 100;
+        for (int page = 1; page <= finalPaginateTimes; page++)
         {
             var response = await ExecuteWithErrorHandling<TResponse>(request(page));
             if (response.Items.Count == 0) 

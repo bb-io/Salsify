@@ -2,6 +2,7 @@ using Apps.Salsify.Api;
 using Apps.Salsify.Api.Utility;
 using Apps.Salsify.Extensions;
 using Apps.Salsify.Models.Entities.Properties;
+using Apps.Salsify.Models.Identifiers;
 using Apps.Salsify.Models.Requests.Property;
 using Apps.Salsify.Models.Responses.Property;
 using Apps.Salsify.Models.Responses.Property.Api;
@@ -26,9 +27,17 @@ public class PropertyActions(InvocationContext invocationContext) : SalsifyInvoc
                 .AddQueryParameter("serialize_system_ids", "true")
                 .AddQueryParameter("query_context", "name")
                 .AddQueryParameterIfNotEmpty("query", input.NameContains)
-                .AddQueryParameter("page", page.ToString()));
+                .AddQueryParameter("page", page));
         
         var result = properties.Select(x => new PropertyListResponse(x)).ToArray();
         return new(result);
+    }
+
+    [Action("Get property", Description = "Get details for a specific property")]
+    public async Task<PropertyResponse> GetProperty([ActionParameter] PropertyIdentifier propertyIdentifier)
+    {
+        var request = new SalsifyRequest($"properties/{propertyIdentifier.PropertyId}");
+        var response = await Client.ExecuteWithErrorHandling<PropertyEntity>(request);
+        return new(response);
     }
 }

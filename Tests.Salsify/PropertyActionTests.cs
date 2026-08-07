@@ -1,4 +1,5 @@
 ﻿using Apps.Salsify.Actions;
+using Apps.Salsify.Models.Identifiers;
 using Apps.Salsify.Models.Requests.Property;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Tests.Salsify.Base;
@@ -17,6 +18,21 @@ public class PropertyActionTests : TestBaseMultipleConnections
 
         // Act
         var response = await actions.SearchProperties(input);
+
+        // Assert
+        PrintResult(response);
+        Assert.IsNotNull(response);
+    }
+
+    [TestMethod, TargetConnections]
+    public async Task GetProperty_ReturnsProperty(InvocationContext context)
+    {
+        // Arrange
+        var actions = new PropertyActions(context);
+        var input = new PropertyIdentifier { PropertyId = "s-cd3753af-1932-46bc-b8da-9ae44cbaeb86" };
+
+        // Act
+        var response = await actions.GetProperty(input);
 
         // Assert
         PrintResult(response);
