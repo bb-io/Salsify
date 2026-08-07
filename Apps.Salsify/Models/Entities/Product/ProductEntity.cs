@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Apps.Salsify.Models.Entities.Product;
 
@@ -12,4 +13,17 @@ public class ProductEntity
     
     [JsonProperty("salsify:updated_at")]
     public DateTime UpdatedAt { get; set; }
+    
+    [JsonExtensionData]
+    public Dictionary<string, JToken> RawValues { get; set; } = new();
+
+    public IReadOnlyList<string> GetValues(string propertyId)
+    {
+        return RawValues.TryGetValue(propertyId, out var token) ? token is JArray array
+                ? array.Select(x => x.ToString()).ToList()
+                : [token.ToString()] 
+            : [];
+    }
+
+    public string? GetValue(string propertyId) => GetValues(propertyId).FirstOrDefault();
 }
