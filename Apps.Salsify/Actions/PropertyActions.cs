@@ -59,4 +59,17 @@ public class PropertyActions(InvocationContext invocationContext) : SalsifyInvoc
         var response = await Client.ExecuteWithErrorHandling<PropertyEntity>(request);
         return new(response);
     }
+    
+    // https://developers.salsify.com/reference/update-property
+    [Action("Update property", Description = "Update an existing property")]
+    public async Task UpdateProperty([ActionParameter] UpdatePropertyRequest updateInput)
+    {
+        var body = new Dictionary<string, string>
+        {
+            { "salsify:name", updateInput.Name },
+        };
+        
+        var request = new SalsifyRequest("properties", Method.Put).WithJsonBody(body);
+        await Client.ExecuteWithErrorHandling(request);
+    }
 }
