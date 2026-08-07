@@ -14,7 +14,12 @@ public class PropertyActionTests : TestBaseMultipleConnections
     {
         // Arrange
         var actions = new PropertyActions(context);
-        var input = new SearchPropertiesRequest { NameContains = "Product" };
+        var input = new SearchPropertiesRequest
+        {
+            NameContains = "",
+            OnlyLocalizable = true,
+            Type = "link"
+        };
 
         // Act
         var response = await actions.SearchProperties(input);

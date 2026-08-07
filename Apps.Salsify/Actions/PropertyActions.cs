@@ -30,8 +30,15 @@ public class PropertyActions(InvocationContext invocationContext) : SalsifyInvoc
                 .AddQueryParameter("query_context", "name")
                 .AddQueryParameterIfNotEmpty("query", input.NameContains)
                 .AddQueryParameter("page", page));
+
+        var filtered = properties.AsEnumerable();
+        if (input.OnlyLocalizable is true)
+            filtered = filtered.Where(x => x.Localizable);
+
+        if (!string.IsNullOrWhiteSpace(input.Type))
+            filtered = filtered.Where(x => x.DataType.Equals(input.Type, StringComparison.OrdinalIgnoreCase));
         
-        var result = properties.Select(x => new PropertyListResponse(x)).ToArray();
+        var result = filtered.Select(x => new PropertyListResponse(x)).ToArray();
         return new(result);
     }
 
