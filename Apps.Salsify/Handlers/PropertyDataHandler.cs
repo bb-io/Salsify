@@ -13,15 +13,13 @@ public class PropertyDataHandler(InvocationContext invocationContext) : SalsifyI
 {
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
-        var properties = await Client.PaginateOffset<ListPropertiesResponse, PropertyListEntity>(page =>
-            new SalsifyRequest("properties", apiVersion: ApiVersion.Internal)
-                .AddQueryParameter("use_new_serialization_format", "true")
-                .AddQueryParameter("serialize_system_ids", "true")
-                .AddQueryParameter("query_context", "name")
-                .AddQueryParameterIfNotEmpty("query", context.SearchString)
-                .AddQueryParameter("page", page), 
-            paginateTimes: 2);
-
+        var request = new SalsifyRequest("properties", apiVersion: ApiVersion.Internal)
+            .AddQueryParameter("use_new_serialization_format", "true")
+            .AddQueryParameter("serialize_system_ids", "true")
+            .AddQueryParameter("query_context", "name")
+            .AddQueryParameterIfNotEmpty("query", context.SearchString);
+        
+        var properties = await Client.PaginateOffset<ListPropertiesResponse, PropertyListEntity>(request, paginateTimes: 2);
         return properties.Select(x => new DataSourceItem(x.Id, $"{x.Name} ({x.PropertyGroup})"));
     }
 }

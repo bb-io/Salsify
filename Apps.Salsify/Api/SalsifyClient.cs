@@ -22,7 +22,7 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
     private readonly string _orgId = creds.Get(CredsNames.OrgId).Value.Trim();
     private const string ApiRoot = "https://app.salsify.com/api";
 
-    public async Task<List<TItem>> PaginateOffset<TResponse, TItem>(Func<int, RestRequest> request, int? paginateTimes = null)
+    public async Task<List<TItem>> PaginateOffset<TResponse, TItem>(RestRequest request, int? paginateTimes = null)
         where TResponse : PaginatedResponse<TItem>
     {
         var all = new List<TItem>();
@@ -30,7 +30,9 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         int finalPaginateTimes = paginateTimes ?? 100;
         for (int page = 1; page <= finalPaginateTimes; page++)
         {
-            var response = await ExecuteWithErrorHandling<TResponse>(request(page));
+            request.AddOrUpdateParameter(new QueryParameter("page", page.ToString()));
+            
+            var response = await ExecuteWithErrorHandling<TResponse>(request);
             if (response.Items.Count == 0) 
                 break;
             
@@ -46,18 +48,22 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         return all;
     }
     
-    public async Task<List<TItem>> PaginateCursor<TResponse, TItem>(Func<string?, RestRequest> request, int? paginateTimes = null)
+    public async Task<List<TItem>> PaginateCursor<TResponse, TItem>(RestRequest request, int? paginateTimes = null)
         where TResponse : PaginatedResponse<TItem>
     {
         var all = new List<TItem>();
         int limit = paginateTimes ?? 100;
         var seen = new HashSet<string>(StringComparer.Ordinal);
         
+        request.AddOrUpdateParameter(new QueryParameter("per_page", "100"));
         string? cursor = null;
 
         for (var i = 0; i < limit; i++)
         {
-            var response = await ExecuteWithErrorHandling<TResponse>(request(cursor));
+            if (!string.IsNullOrEmpty(cursor))
+                request.AddOrUpdateParameter(new QueryParameter("cursor", cursor));
+
+            var response = await ExecuteWithErrorHandling<TResponse>(request);
             all.AddRange(response.Items);
 
             if (response.Meta is not { } meta)

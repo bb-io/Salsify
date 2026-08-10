@@ -22,14 +22,11 @@ public class ProductActions(InvocationContext context) : SalsifyInvocable(contex
         var currentRequest = new SalsifyRequest("current", Method.Get, ApiVersion.Internal);
         var currentResponse = await Client.ExecuteWithErrorHandling<CurrentResponse>(currentRequest);
         string nameProperty = currentResponse.RoleProperties.First(x => x.Role == "product_name").ExternalId;
-        
-        var response = await Client.PaginateCursor<ListProductsResponse, ProductEntity>(cursor => 
-            new SalsifyRequest("products")
-                .AddQueryParameterIfNotEmpty("query", searchInput.Query)
-                .AddQueryParameterIfNotEmpty("cursor", cursor)
-                .AddQueryParameter("per_page", "100"));
 
-        var result = response.Select(x => new ProductResponse(x, nameProperty)).ToArray();
+        var productsRequest = new SalsifyRequest("products").AddQueryParameterIfNotEmpty("query", searchInput.Query);
+        var productsResponse = await Client.PaginateCursor<ListProductsResponse, ProductEntity>(productsRequest);
+
+        var result = productsResponse.Select(x => new ProductResponse(x, nameProperty)).ToArray();
         return new(result);
     }
 }
