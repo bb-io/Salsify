@@ -6,6 +6,9 @@ public class PropertyEntity
 {
     [JsonProperty("salsify:id")]
     public string Id { get; set; } = string.Empty;
+    
+    [JsonProperty("salsify:system_id")]
+    public string SystemId { get; set; } = string.Empty;
 
     [JsonProperty("salsify:name")]
     public string Name { get; set; } = string.Empty;

@@ -5,6 +5,9 @@ namespace Apps.Salsify.Models.Entities.Properties;
 public class PropertyListEntity
 {
     [JsonProperty("id")]
+    public string SystemId { get; set; } = string.Empty;
+
+    [JsonProperty("external_id")]
     public string Id { get; set; } = string.Empty;
 
     [JsonProperty("name")]

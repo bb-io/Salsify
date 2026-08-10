@@ -20,6 +20,6 @@ public class PropertyDataHandler(InvocationContext invocationContext) : SalsifyI
             .AddQueryParameterIfNotEmpty("query", context.SearchString);
         
         var properties = await Client.PaginateOffset<ListPropertiesResponse, PropertyListEntity>(request, paginateTimes: 2);
-        return properties.Select(x => new DataSourceItem(x.Id, $"{x.Name} ({x.PropertyGroup})"));
+        return properties.Select(x => new DataSourceItem(x.SystemId, $"{x.Name} ({x.PropertyGroup})"));
     }
 }
