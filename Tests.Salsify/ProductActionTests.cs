@@ -13,7 +13,12 @@ public class ProductActionTests : TestBaseMultipleConnections
     {
         // Arrange
         var actions = new ProductActions(context);
-        var input = new SearchProductsRequest { };
+        var input = new SearchProductsRequest
+        {
+            UpdatedAfter = DateTime.UtcNow - TimeSpan.FromDays(2),
+            UpdatedBefore = DateTime.UtcNow + TimeSpan.FromHours(1),
+            NameContains = "test"
+        };
 
         // Act
         var result = await actions.SearchProducts(input);
