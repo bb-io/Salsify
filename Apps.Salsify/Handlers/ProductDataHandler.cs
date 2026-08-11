@@ -1,7 +1,6 @@
 using Apps.Salsify.Api;
 using Apps.Salsify.Constants;
 using Apps.Salsify.Extensions;
-using Apps.Salsify.Helpers;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Responses.Product;
 using Apps.Salsify.Models.Responses.Product.Api;
@@ -14,7 +13,8 @@ public class ProductDataHandler(InvocationContext context) : SalsifyInvocable(co
 {
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
-        string nameProperty = await PropertyHelper.GetRolePropertyName(Client, RolePropertyNames.ProductName);
+        var current = await Client.GetCurrentOrgInfo();
+        string nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
 
         string? query = null;
         if (!string.IsNullOrEmpty(context.SearchString))

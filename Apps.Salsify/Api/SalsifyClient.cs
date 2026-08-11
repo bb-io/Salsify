@@ -1,6 +1,7 @@
 using Apps.Salsify.Api.Utility;
 using Apps.Salsify.Authenticators;
 using Apps.Salsify.Constants;
+using Apps.Salsify.Models.Utility.Current;
 using Apps.Salsify.Models.Utility.Error;
 using Apps.Salsify.Models.Utility.Pagination;
 using Blackbird.Applications.Sdk.Common.Authentication;
@@ -21,6 +22,8 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
 {
     private readonly string _orgId = creds.Get(CredsNames.OrgId).Value.Trim();
     private const string ApiRoot = "https://app.salsify.com/api";
+    
+    private CurrentResponse? _current;
 
     public async Task<List<TItem>> PaginateOffset<TResponse, TItem>(RestRequest request, int? paginateTimes = null)
         where TResponse : PaginatedResponse<TItem>
@@ -79,6 +82,16 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         }
 
         return all;
+    }
+
+    public async Task<CurrentResponse> GetCurrentOrgInfo()
+    {
+        if (_current is not null)
+            return _current;
+
+        var request = new SalsifyRequest("current", Method.Get, ApiVersion.Unversioned);
+        _current = await ExecuteWithErrorHandling<CurrentResponse>(request);
+        return _current;
     }
     
     public override async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)
