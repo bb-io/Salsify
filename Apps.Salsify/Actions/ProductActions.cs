@@ -18,6 +18,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Http;
+using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Blackbird.Filters.Coders;
 using Blackbird.Filters.Shared;
 using RestSharp;
@@ -125,17 +126,18 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
             downloadInput.ExcludeProperties);
         
         string? productName = nameProperty is null ? null : product.GetValue(nameProperty);
-        string fileName = $"{productIdentifier.ProductId}_{locale}.html";
+        string fileName = $"{product.Id}_{locale}.html";
         var coded = new HtmlCoder().Deserialize(doc.DocumentNode.OuterHtml, fileName);
 
         coded.Language = locale;
         coded.Metadata["blackbird-salsify-version"] = product.Version.ToString();
         coded.SystemReference = new SystemReference
         {
-            ContentId = productIdentifier.ProductId,
+            ContentId = product.Id,
             ContentName = productName ?? product.Id,
             SystemName = "Salsify",
-            SystemRef = "https://app.salsify.com/"
+            SystemRef = "https://app.salsify.com/",
+            AdminUrl = $"https://app.salsify.com/app/orgs/{Creds.Get(CredsNames.OrgId).Value}/products/v2/{product.Id}"
         };
 
         var outputFile = await fileManagementClient.UploadAsync(coded.ToStream(), MediaTypeNames.Text.Html, fileName);
