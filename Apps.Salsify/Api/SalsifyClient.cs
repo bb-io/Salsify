@@ -101,7 +101,7 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         string segment = salsify.ApiVersion switch
         {
             ApiVersion.V1 => "v1/",
-            ApiVersion.Internal => string.Empty,
+            ApiVersion.Unversioned => string.Empty,
             _ => throw new PluginApplicationException(nameof(salsify.ApiVersion))
         };
 

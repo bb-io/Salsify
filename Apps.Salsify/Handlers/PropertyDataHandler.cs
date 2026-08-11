@@ -13,7 +13,7 @@ public class PropertyDataHandler(InvocationContext invocationContext) : SalsifyI
 {
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
-        var request = new SalsifyRequest("properties", apiVersion: ApiVersion.Internal)
+        var request = new SalsifyRequest("properties", apiVersion: ApiVersion.Unversioned)
             .AddQueryParameter("use_new_serialization_format", "true")
             .AddQueryParameter("serialize_system_ids", "true")
             .AddQueryParameter("query_context", "name")

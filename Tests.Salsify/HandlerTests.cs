@@ -35,4 +35,18 @@ public class HandlerTests : TestBaseMultipleConnections
         PrintDataHandlerResult(result);
         Assert.IsNotNull(result);
     }
+    
+    [TestMethod, TargetConnections]
+    public async Task LocaleDataHandler_ReturnsLocales(InvocationContext context)
+    {
+        // Arrange
+        var handler = new LocaleDataHandler(context);
+    
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext { SearchString = "ca" }, CancellationToken.None);
+    
+        // Assert
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
 }

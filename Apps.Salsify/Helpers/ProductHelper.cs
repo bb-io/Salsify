@@ -12,7 +12,7 @@ public static class ProductHelper
     // The 'current' endpoint is undocumented and can be accessed from the UI
     public static async Task<string> GetProductNamePropertyName(SalsifyClient client)
     {
-        var currentRequest = new SalsifyRequest("current", Method.Get, ApiVersion.Internal);
+        var currentRequest = new SalsifyRequest("current", Method.Get, ApiVersion.Unversioned);
         var currentResponse = await client.ExecuteWithErrorHandling<CurrentResponse>(currentRequest);
         return currentResponse.RoleProperties.First(x => x.Role == "product_name").Id;
     }
