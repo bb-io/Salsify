@@ -3,7 +3,6 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using RestSharp;
 
 namespace Apps.Salsify.Connections;
 
@@ -16,10 +15,10 @@ public class ConnectionValidator(InvocationContext invocationContext) : BaseInvo
         try
         {
             var client = new SalsifyClient(authenticationCredentialsProviders);
-            var request = new RestRequest("products");
+            var request = new SalsifyRequest("products");
 
             var response = await client.ExecuteAsync(request, cancellationToken);
-            var isValid = response.StatusCode != System.Net.HttpStatusCode.Unauthorized;
+            bool isValid = response.StatusCode != System.Net.HttpStatusCode.Unauthorized;
             
             return new ConnectionValidationResponse
             {
