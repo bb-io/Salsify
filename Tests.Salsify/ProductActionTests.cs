@@ -13,7 +13,7 @@ public class ProductActionTests : TestBaseMultipleConnections
     public async Task SearchProducts_ReturnsProducts(InvocationContext context)
     {
         // Arrange
-        var actions = new ProductActions(context);
+        var actions = new ProductActions(context, FileManager);
         var input = new SearchProductsRequest
         {
             UpdatedAfter = DateTime.UtcNow - TimeSpan.FromDays(2),
@@ -33,8 +33,8 @@ public class ProductActionTests : TestBaseMultipleConnections
     public async Task GetProduct_ReturnsProduct(InvocationContext context)
     {
         // Arrange
-        var actions = new ProductActions(context);
-        var identifier = new ProductIdentifier { ProductId = "s-c3659828-bf4e-4ade-9f06-11448cc7169e" };
+        var actions = new ProductActions(context, FileManager);
+        var identifier = new ProductIdentifier { ProductId = "partcodeid" };
 
         // Act
         var result = await actions.GetProduct(identifier);
@@ -42,5 +42,21 @@ public class ProductActionTests : TestBaseMultipleConnections
         // Assert
         PrintResult(result);
         Assert.IsNotNull(result);
+    }
+
+    [TestMethod, TargetConnections]
+    public async Task DownloadProduct_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var actions = new ProductActions(context, FileManager);
+        var identifier = new ProductIdentifier { ProductId = "partcodeid" };
+        var downloadInput = new DownloadProductRequest();
+
+        // Act
+        var result = await actions.DownloadProduct(identifier, downloadInput);
+
+        // Assert
+        Assert.IsNotNull(result.Content);
+        TestContext.WriteLine(result.Content.Name);
     }
 }
