@@ -13,9 +13,9 @@ public class CurrentResponse
     [JsonProperty("default_locale_id")]
     public string DefaultLocaleId { get; set; } = string.Empty;
 
-    public string GetRolePropertyId(string role)
+    public string? GetRolePropertyId(string role)
     {
-        return RoleProperties.First(x => x.Role == role).Id;
+        return RoleProperties.FirstOrDefault(x => x.Role == role)?.Id;
     }
 
     public string ResolveLocale(string? requested)

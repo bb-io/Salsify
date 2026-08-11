@@ -35,7 +35,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
         searchInput.Validate();
 
         var current = await Client.GetCurrentOrgInfo();
-        string nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
+        string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
 
         var queryList = new List<string>();
         
@@ -67,7 +67,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     public async Task<ProductResponse> GetProduct([ActionParameter] ProductIdentifier productIdentifier)
     {
         var current = await Client.GetCurrentOrgInfo();
-        string nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
+        string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
         
         var request = new SalsifyRequest($"products/{productIdentifier.ProductId}");
         var response = await Client.ExecuteWithErrorHandling<ProductEntity>(request);
@@ -86,7 +86,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
         var current = await Client.GetCurrentOrgInfo();
         
         string locale = current.ResolveLocale(downloadInput.Locale);
-        string nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
+        string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
         string productIdProperty = current.GetRolePropertyId(RolePropertyNames.ProductId) ?? 
                                    throw new PluginMisconfigurationException("This organization has no product ID property configured");
         

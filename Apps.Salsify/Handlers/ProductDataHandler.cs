@@ -14,7 +14,7 @@ public class ProductDataHandler(InvocationContext context) : SalsifyInvocable(co
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
         var current = await Client.GetCurrentOrgInfo();
-        string nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
+        string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
 
         string? query = null;
         if (!string.IsNullOrEmpty(context.SearchString))
