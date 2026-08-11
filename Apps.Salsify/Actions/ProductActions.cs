@@ -1,8 +1,10 @@
+using System.Net.Mime;
 using Apps.Salsify.Api;
 using Apps.Salsify.Api.Utility;
 using Apps.Salsify.Constants;
+using Apps.Salsify.Converters.Product;
+using Apps.Salsify.Converters.Product.Models;
 using Apps.Salsify.Extensions;
-using Apps.Salsify.Helpers;
 using Apps.Salsify.Models.Entities.Export;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Identifiers;
@@ -16,6 +18,8 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Http;
+using Blackbird.Filters.Coders;
+using Blackbird.Filters.Shared;
 using RestSharp;
 
 namespace Apps.Salsify.Actions;
@@ -28,8 +32,9 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     public async Task<SearchProductsResponse> SearchProducts([ActionParameter] SearchProductsRequest searchInput)
     {
         searchInput.Validate();
-        
-        string nameProperty = await PropertyHelper.GetRolePropertyName(Client, RolePropertyNames.ProductName);
+
+        var current = await Client.GetCurrentOrgInfo();
+        string nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
 
         var queryList = new List<string>();
         
@@ -60,7 +65,9 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     [Action("Get product", Description = "Get details for a specific product")]
     public async Task<ProductResponse> GetProduct([ActionParameter] ProductIdentifier productIdentifier)
     {
-        string nameProperty = await PropertyHelper.GetRolePropertyName(Client, RolePropertyNames.ProductName);
+        var current = await Client.GetCurrentOrgInfo();
+        string nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
+        
         var request = new SalsifyRequest($"products/{productIdentifier.ProductId}");
         var response = await Client.ExecuteWithErrorHandling<ProductEntity>(request);
         return new(response, nameProperty);
@@ -75,7 +82,12 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
         // The filter param in the request below does not work with 'salsify:id' - it returns 'Invalid search query: Unknown error'
         // And the value that comes from productIdentifier uses product's 'salsify:id', not system ID
         // So we have to resolve it manually
-        string productIdPropertyName = await PropertyHelper.GetRolePropertyName(Client, RolePropertyNames.ProductId);
+        var current = await Client.GetCurrentOrgInfo();
+        
+        string locale = current.ResolveLocale(downloadInput.Locale);
+        string nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
+        string productIdProperty = current.GetRolePropertyId(RolePropertyNames.ProductId) ?? 
+                                   throw new PluginMisconfigurationException("This organization has no product ID property configured");
         
         var startExportRequest = new SalsifyRequest("export_runs", Method.Post, ApiVersion.Unversioned)
             .WithJsonBody(new
@@ -86,7 +98,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
                     include_all_content_locales = true,
                     include_all_columns = true,
                     entity_type = "product",
-                    filter = $"='{productIdPropertyName}':'{productIdentifier.ProductId}'"
+                    filter = $"='{productIdProperty}':'{productIdentifier.ProductId}'"
                 }
             });
         var startExportResponse = await Client.ExecuteWithErrorHandling<ExportResultEntity>(startExportRequest);
@@ -96,18 +108,38 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
 
         var s3Client = new RestClient();
         var downloadS3Request = new RestRequest(downloadUrl);
-        var networkStream = await s3Client.DownloadStreamAsync(downloadS3Request) ??
-                            throw new PluginApplicationException("Failed to download file from S3.");
-        
-        var seekableStream = new MemoryStream();
-        await networkStream.CopyToAsync(seekableStream);
-        seekableStream.Position = 0;
+        var downloadS3Response = await s3Client.ExecuteAsync(downloadS3Request);
 
-        var file = await fileManagementClient.UploadAsync(
-            seekableStream, 
-            "application/octet-stream", // TODO: change
-            $"{productIdentifier.ProductId}.json");
-        return new(file);
+        if (!downloadS3Response.IsSuccessful || string.IsNullOrEmpty(downloadS3Response.Content))
+            throw new PluginApplicationException($"Failed to download export file ({(int)downloadS3Response.StatusCode}).");
+
+        string exportedJson = downloadS3Response.Content;
+        var productContent = new ProductJsonContent(exportedJson);
+        var product = productContent.Products.FirstOrDefault() ?? 
+                      throw new PluginMisconfigurationException("The export contained no products");
+        
+        var doc = ProductHtmlConverter.GenerateHtml(
+            productContent, 
+            locale, 
+            includeNonLocalizable: downloadInput.OnlyLocalizableProperties is false, 
+            downloadInput.ExcludeProperties);
+        
+        string? productName = nameProperty is null ? null : product.GetValue(nameProperty);
+        string fileName = $"{productIdentifier.ProductId}_{locale}.html";
+        var coded = new HtmlCoder().Deserialize(doc.DocumentNode.OuterHtml, fileName);
+
+        coded.Language = locale;
+        coded.Metadata["blackbird-salsify-version"] = product.Version.ToString();
+        coded.SystemReference = new SystemReference
+        {
+            ContentId = productIdentifier.ProductId,
+            ContentName = productName ?? product.Id,
+            SystemName = "Salsify",
+            SystemRef = "https://app.salsify.com/"
+        };
+
+        var outputFile = await fileManagementClient.UploadAsync(coded.ToStream(), MediaTypeNames.Text.Html, fileName);
+        return new(outputFile);
     }
 
     private async Task<string> PollForDownloadUrl(long exportRunId)

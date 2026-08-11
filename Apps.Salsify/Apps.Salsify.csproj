@@ -14,7 +14,7 @@
         <PackageReference Include="Blackbird.Applications.SDK.Blueprints" Version="1.0.2" />
         <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.1.0" />
         <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.1.0-rc.8709" />
-        <PackageReference Include="Blackbird.Filters" Version="1.2.12" />
+        <PackageReference Include="Blackbird.Filters" Version="1.2.16" />
     </ItemGroup>
 
     <ItemGroup>

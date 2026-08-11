@@ -9,4 +9,17 @@ public class CurrentResponse
 
     [JsonProperty("locales")]
     public List<LocaleResponse> Locales { get; set; } = [];
+
+    [JsonProperty("default_locale_id")]
+    public string DefaultLocaleId { get; set; } = string.Empty;
+
+    public string GetRolePropertyId(string role)
+    {
+        return RoleProperties.First(x => x.Role == role).Id;
+    }
+
+    public string ResolveLocale(string? requested)
+    {
+        return string.IsNullOrWhiteSpace(requested) ? DefaultLocaleId : requested;
+    }
 }

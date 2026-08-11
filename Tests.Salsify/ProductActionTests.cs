@@ -50,7 +50,11 @@ public class ProductActionTests : TestBaseMultipleConnections
         // Arrange
         var actions = new ProductActions(context, FileManager);
         var identifier = new ProductIdentifier { ProductId = "partcodeid" };
-        var downloadInput = new DownloadProductRequest();
+        var downloadInput = new DownloadProductRequest
+        {
+            OnlyLocalizableProperties = false,
+            Locale = "en-US",
+        };
 
         // Act
         var result = await actions.DownloadProduct(identifier, downloadInput);
