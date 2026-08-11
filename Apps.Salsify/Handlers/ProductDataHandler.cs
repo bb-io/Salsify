@@ -23,6 +23,6 @@ public class ProductDataHandler(InvocationContext context) : SalsifyInvocable(co
         var response = await Client.PaginateCursor<ListProductsResponse, ProductEntity>(request, paginateTimes: 2);
         var productsWithName = response.Select(x => new ProductResponse(x, nameProperty)).ToArray();
 
-        return productsWithName.Select(x => new DataSourceItem(x.SystemId, string.IsNullOrWhiteSpace(x.Name) ? x.Id : x.Name));
+        return productsWithName.Select(x => new DataSourceItem(x.Id, string.IsNullOrWhiteSpace(x.Name) ? x.Id : x.Name));
     }
 }

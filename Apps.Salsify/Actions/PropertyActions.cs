@@ -23,7 +23,7 @@ public class PropertyActions(InvocationContext invocationContext) : SalsifyInvoc
     {
         // This endpoint is not in the docs. It's accessible from DevTools
         // To access it, go to the UI homepage (product list) -> Customize View
-        var request = new SalsifyRequest("properties", apiVersion: ApiVersion.Internal)
+        var request = new SalsifyRequest("properties", apiVersion: ApiVersion.Unversioned)
             .AddQueryParameter("use_new_serialization_format", "true")
             .AddQueryParameter("serialize_system_ids", "true")
             .AddQueryParameter("query_context", "name")

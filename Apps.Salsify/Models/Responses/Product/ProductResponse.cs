@@ -8,9 +8,6 @@ public class ProductResponse(ProductEntity entity, string? nameProperty = null)
     [Display("Product ID")]
     public string Id { get; set; } = entity.Id;
     
-    [Display("Product system ID")]
-    public string SystemId { get; set; } = entity.SystemId;
-    
     [Display("Product name")]
     public string? Name { get; set; } = nameProperty is null ? null : entity.GetValue(nameProperty);
 

@@ -7,9 +7,6 @@ public class PropertyListResponse(PropertyListEntity propertyListEntity)
 {
     [Display("Property ID")]
     public string Id { get; set; } = propertyListEntity.Id;
-    
-    [Display("Property system ID")]
-    public string SystemId { get; set; } = propertyListEntity.SystemId;
 
     [Display("Property name")] 
     public string Name { get; set; } = propertyListEntity.Name;
