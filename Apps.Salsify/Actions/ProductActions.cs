@@ -174,4 +174,12 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
         var request = new SalsifyRequest("products", Method.Post).AddJsonBody(body);
         await Client.ExecuteWithErrorHandling(request);
     }
+
+    // https://developers.salsify.com/reference/delete-product
+    [Action("Delete product", Description = "Delete an existing product, including all associated stored values")]
+    public Task DeleteProduct([ActionParameter] ProductIdentifier productIdentifier)
+    {
+        var request = new SalsifyRequest($"products/{productIdentifier.ProductId}", Method.Delete);
+        return Client.ExecuteWithErrorHandling(request);
+    }
 }

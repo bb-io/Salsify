@@ -2,6 +2,7 @@ using Apps.Salsify.Actions;
 using Apps.Salsify.Models.Identifiers;
 using Apps.Salsify.Models.Identifiers.Optional;
 using Apps.Salsify.Models.Requests.Product;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Tests.Salsify.Base;
@@ -103,5 +104,19 @@ public class ProductActionTests : TestBaseMultipleConnections
         
         Assert.IsNotNull(createdProduct);
         PrintResult(createdProduct);
+    }
+
+    [TestMethod, TargetConnections]
+    public async Task DeleteProduct_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var actions = new ProductActions(context, FileManager);
+        var productIdentifier = new ProductIdentifier { ProductId = "test from tests bb2" };
+
+        // Act
+        await actions.DeleteProduct(productIdentifier);
+
+        // Assert
+        await Assert.ThrowsExceptionAsync<PluginApplicationException>(() => actions.GetProduct(productIdentifier));
     }
 }
