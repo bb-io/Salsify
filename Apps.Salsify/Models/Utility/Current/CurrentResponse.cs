@@ -1,3 +1,4 @@
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Newtonsoft.Json;
 
 namespace Apps.Salsify.Models.Utility.Current;
@@ -20,6 +21,16 @@ public class CurrentResponse
 
     public string ResolveLocale(string? requested)
     {
-        return string.IsNullOrWhiteSpace(requested) ? DefaultLocaleId : requested;
+        return ValidateLocale(string.IsNullOrWhiteSpace(requested) ? DefaultLocaleId : requested);
+    }
+
+    public string ValidateLocale(string locale)
+    {
+        if (Locales.All(x => x.Id != locale))
+            throw new PluginMisconfigurationException(
+                $"Locale '{locale}' is not configured in this organization. " +
+                $"Available: {string.Join(", ", Locales.Select(x => x.Id))}");
+
+        return locale;
     }
 }

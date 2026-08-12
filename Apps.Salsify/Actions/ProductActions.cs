@@ -5,6 +5,7 @@ using Apps.Salsify.Converters.Product;
 using Apps.Salsify.Extensions;
 using Apps.Salsify.Helpers;
 using Apps.Salsify.Models.Entities.Product;
+using Apps.Salsify.Models.Entities.Properties;
 using Apps.Salsify.Models.Identifiers;
 using Apps.Salsify.Models.Identifiers.Optional;
 using Apps.Salsify.Models.Requests.Product;
@@ -131,12 +132,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
                            throw new PluginMisconfigurationException("Product ID was not found in the file. Please provide it in the input");
         
         var current = await Client.GetCurrentOrgInfo();
-        if (!current.Locales.Select(x => x.Id).Contains(uploadInput.Locale))
-        {
-            throw new PluginMisconfigurationException(
-                $"Locale '{uploadInput.Locale}' is not configured. " +
-                $"Available: {string.Join(", ", current.Locales.Select(x => x.Id))}");
-        }
+        current.ValidateLocale(uploadInput.Locale);
 
         var values = ProductJsonConverter.ParseValues(html);
         if (values.Count == 0)
@@ -181,5 +177,47 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     {
         var request = new SalsifyRequest($"products/{productIdentifier.ProductId}", Method.Delete);
         return Client.ExecuteWithErrorHandling(request);
+    }
+
+    // https://developers.salsify.com/reference/update-product
+    [Action("Update product property value", Description = "Update property value of a specific product")]
+    public async Task UpdatePropertyValue(
+        [ActionParameter] ProductIdentifier productIdentifier,
+        [ActionParameter] PropertyIdentifier propertyIdentifier,
+        [ActionParameter] UpdatePropertyValueRequest updateInput)
+    {
+        string propertyId = propertyIdentifier.PropertyId;
+        string productId = productIdentifier.ProductId;
+        string? locale = updateInput.Locale;
+
+        var propertyRequest = new SalsifyRequest($"properties/{propertyId}");
+        var property = await Client.ExecuteWithErrorHandling<PropertyEntity>(propertyRequest);
+
+        if (property.Type == PropertyTypeConstants.ComputedPropertyType)
+            throw new PluginMisconfigurationException($"Property '{propertyId}' is computed and cannot be written to.");
+
+        var current = await Client.GetCurrentOrgInfo();
+        if (property.Localizable && string.IsNullOrWhiteSpace(locale))
+            throw new PluginMisconfigurationException($"Property '{propertyId}' is localizable - specify which locale to update");
+
+        if (!string.IsNullOrWhiteSpace(locale))
+            current.ValidateLocale(locale);
+
+        bool localized = property.Localizable && !string.IsNullOrWhiteSpace(locale);
+        if (!localized && !string.IsNullOrWhiteSpace(locale))
+        {
+            string logMsg = $"Property '{propertyId}' is not localizable - the locale is ignored and the single value is replaced";
+            InvocationContext.Logger?.LogInformation(logMsg, []);
+        }
+
+        var body = new Dictionary<string, object>
+        {
+            [propertyId] = localized
+                ? new Dictionary<string, string> { [locale!] = updateInput.PropertyValue }
+                : updateInput.PropertyValue
+        };
+
+        var updateRequest = new SalsifyRequest($"products/{productId}", Method.Put).WithJsonBody(body);
+        await Client.ExecuteWithErrorHandling(updateRequest);
     }
 }

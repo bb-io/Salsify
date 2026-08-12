@@ -119,4 +119,24 @@ public class ProductActionTests : TestBaseMultipleConnections
         // Assert
         await Assert.ThrowsExceptionAsync<PluginApplicationException>(() => actions.GetProduct(productIdentifier));
     }
+
+    [TestMethod, TargetConnections]
+    public async Task UpdatePropertyValue_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var actions = new ProductActions(context, FileManager);
+        string propertyId = "RichText_LOC";
+        string propertyValue = "test updated richtext";
+        
+        var productIdentifier = new ProductIdentifier { ProductId = "partcodeid" };
+        var propertyIdentifier = new PropertyIdentifier { PropertyId = propertyId };
+        var updateInput = new UpdatePropertyValueRequest
+        {
+            PropertyValue = propertyValue,
+            Locale = "fr-CA"
+        };
+
+        // Act
+        await actions.UpdatePropertyValue(productIdentifier, propertyIdentifier, updateInput);
+    }
 }
