@@ -1,5 +1,4 @@
 using System.Net;
-using Apps.Salsify.Converters.Product.Models;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Entities.Properties;
 using Blackbird.Applications.Sdk.Common.Exceptions;
@@ -16,35 +15,30 @@ public static class ProductHtmlConverter
     private static readonly HashSet<string> MarkupDataTypes = new(StringComparer.OrdinalIgnoreCase) { "rich_text", "html" };
 
     public static HtmlDocument GenerateHtml(
-        ProductJsonContent content,
+        ProductEntity product,
+        IReadOnlyDictionary<string, PropertyEntity> definitions,
         string locale,
         bool includeNonLocalizable = false,
         IReadOnlyCollection<string>? excludeProperties = null)
     {
-        ProductEntity product = content.Products.FirstOrDefault() ?? throw new PluginApplicationException("The export contained no products");
-
-        var definitions = content.Attributes
-            .GroupBy(x => x.Id, StringComparer.Ordinal)
-            .ToDictionary(x => x.Key, x => x.First(), StringComparer.Ordinal);
-
         var excluded = new HashSet<string>(excludeProperties ?? [], StringComparer.Ordinal);
 
         var doc = new HtmlDocument();
         doc.LoadHtml("<html><head><meta charset=\"utf-8\"></head><body></body></html>");
-        HtmlNode body = doc.DocumentNode.SelectSingleNode("//body")!;
+        var body = doc.DocumentNode.SelectSingleNode("//body")!;
 
         int emitted = 0;
-        foreach (var (propertyId, token) in product.Values)
+        foreach (var (propertyId, _) in product.Values)
         {
             var definition = definitions.GetValueOrDefault(propertyId);
-            if (excluded.Contains(propertyId) || !IsEligible(definition, includeNonLocalizable))
+            if (excluded.Contains(propertyId) || !PropertyIsEligible(definition, includeNonLocalizable))
                 continue;
 
             string lookupKey = definition!.Localizable ? locale : string.Empty;
             if (!product.GetLocalizedValues(propertyId).TryGetValue(lookupKey, out var values))
                 continue;
 
-            for (var index = 0; index < values.Count; index++)
+            for (int index = 0; index < values.Count; index++)
             {
                 body.AppendChild(BuildValueNode(doc, propertyId, index, definition.DataType, values[index]));
                 emitted++;
@@ -52,11 +46,11 @@ public static class ProductHtmlConverter
         }
 
         return emitted == 0 
-            ? throw new PluginMisconfigurationException($"Product '{product.Id}' has no translatable content for {locale}")
+            ? throw new PluginMisconfigurationException($"Product '{product.Id}' has no translatable content for {locale}") 
             : doc;
     }
 
-    private static bool IsEligible(PropertyEntity? definition, bool includeNonLocalizable)
+    private static bool PropertyIsEligible(PropertyEntity? definition, bool includeNonLocalizable)
     {
         if (definition is null) 
             return false;
