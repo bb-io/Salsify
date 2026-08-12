@@ -150,4 +150,28 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
         var request = new SalsifyRequest($"products/{productId}", Method.Put).WithJsonBody(updateBody);
         await Client.ExecuteWithErrorHandling(request);
     }
+
+    // https://developers.salsify.com/reference/add-a-product
+    [Action("Create product", Description = "Create a new product")]
+    public async Task CreateProduct([ActionParameter] CreateProductRequest createInput)
+    {
+        var current = await Client.GetCurrentOrgInfo();
+        string idProperty = current.GetRolePropertyId(RolePropertyNames.ProductId) ?? 
+                            throw new PluginMisconfigurationException("Product ID is not configured in your organization");
+
+        var body = new Dictionary<string, string?>
+        {
+            { idProperty, createInput.Id }
+        };
+
+        if (!string.IsNullOrWhiteSpace(createInput.Name))
+        {
+            string nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName) ?? 
+                                  throw new PluginMisconfigurationException("Product name is not configured in your organization");
+            body[nameProperty] = createInput.Name;
+        }
+
+        var request = new SalsifyRequest("products", Method.Post).AddJsonBody(body);
+        await Client.ExecuteWithErrorHandling(request);
+    }
 }

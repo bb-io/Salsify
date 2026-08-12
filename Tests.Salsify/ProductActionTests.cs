@@ -81,4 +81,27 @@ public class ProductActionTests : TestBaseMultipleConnections
         // Act
         await actions.UploadProduct(uploadInput, productIdentifier);
     }
+
+    [TestMethod, TargetConnections]
+    public async Task CreateProduct_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var actions = new ProductActions(context, FileManager);
+        string id = "test from tests bb2";
+        var createInput = new CreateProductRequest
+        {
+            Id = id,
+            Name = "test name 123"
+        };
+
+        // Act
+        await actions.CreateProduct(createInput);
+
+        // Assert
+        var productIdentifier = new ProductIdentifier { ProductId = id };
+        var createdProduct = await actions.GetProduct(productIdentifier);
+        
+        Assert.IsNotNull(createdProduct);
+        PrintResult(createdProduct);
+    }
 }
