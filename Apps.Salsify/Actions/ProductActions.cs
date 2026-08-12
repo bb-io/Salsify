@@ -6,17 +6,22 @@ using Apps.Salsify.Extensions;
 using Apps.Salsify.Helpers;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Identifiers;
+using Apps.Salsify.Models.Identifiers.Optional;
 using Apps.Salsify.Models.Requests.Product;
 using Apps.Salsify.Models.Responses.File;
 using Apps.Salsify.Models.Responses.Product;
 using Apps.Salsify.Models.Responses.Product.Api;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Blackbird.Filters.Coders;
+using Blackbird.Filters.Extensions;
 using Blackbird.Filters.Shared;
+using RestSharp;
 
 namespace Apps.Salsify.Actions;
 
@@ -69,7 +74,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
         return new(response, nameProperty);
     }
 
-    // https://developers.salsify.com/reference/start-export-run
+    // https://developers.salsify.com/reference/read-product-record
     [Action("Download product", Description = "Download product content")]
     public async Task<FileResponse> DownloadProduct(
         [ActionParameter] ProductIdentifier productIdentifier,
@@ -97,7 +102,6 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
         
         var coded = new HtmlCoder().Deserialize(doc.DocumentNode.OuterHtml, fileName);
         coded.Language = locale;
-        coded.Metadata["blackbird-salsify-version"] = product.Version.ToString();
         coded.SystemReference = new SystemReference
         {
             ContentId = product.Id,
@@ -109,5 +113,41 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
 
         var outputFile = await fileManagementClient.UploadAsync(coded.ToStream(), MediaTypeNames.Text.Html, fileName);
         return new(outputFile);
+    }
+
+    // https://developers.salsify.com/reference/update-product
+    [Action("Upload product", Description = "Upload product content from a file")]
+    public async Task UploadProduct(
+        [ActionParameter] UploadProductRequest uploadInput,
+        [ActionParameter] ProductOptionalIdentifier productIdentifier)
+    {
+        await using var fileStream = await fileManagementClient.DownloadAsync(uploadInput.Content);
+        var htmlStream = await fileStream.ToHtml(uploadInput.Content.Name);
+        string html = htmlStream.ReadString();
+
+        var coded = new HtmlCoder().Deserialize(html, uploadInput.Content.Name);
+        string productId = productIdentifier.ProductId ?? 
+                           coded.SystemReference.ContentId ??
+                           throw new PluginMisconfigurationException("Product ID was not found in the file. Please provide it in the input");
+        
+        var current = await Client.GetCurrentOrgInfo();
+        if (!current.Locales.Select(x => x.Id).Contains(uploadInput.Locale))
+        {
+            throw new PluginMisconfigurationException(
+                $"Locale '{uploadInput.Locale}' is not configured. " +
+                $"Available: {string.Join(", ", current.Locales.Select(x => x.Id))}");
+        }
+
+        var values = ProductJsonConverter.ParseValues(html);
+        if (values.Count == 0)
+            throw new PluginMisconfigurationException("The file contains no property values");
+
+        var definitions = await PropertyHelper.GetDefinitions(Client, values.Keys);
+        var updateBody = ProductJsonConverter.BuildUpdateBody(values, definitions, uploadInput.Locale);
+        if (updateBody.Count == 0)
+            throw new PluginMisconfigurationException($"Nothing to write for product '{productId}'");
+
+        var request = new SalsifyRequest($"products/{productId}", Method.Put).WithJsonBody(updateBody);
+        await Client.ExecuteWithErrorHandling(request);
     }
 }

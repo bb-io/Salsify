@@ -9,6 +9,7 @@ public static class PropertyHelper
 {
     private const int ReportBatchSize = 100;
 
+    // https://developers.salsify.com/reference/read-multiple-properties-report
     public static async Task<Dictionary<string, PropertyEntity>> GetDefinitions(SalsifyClient client, IEnumerable<string> propertyIds)
     {
         var ids = propertyIds.Distinct(StringComparer.Ordinal).ToArray();

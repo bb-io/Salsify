@@ -1,6 +1,8 @@
 using Apps.Salsify.Actions;
 using Apps.Salsify.Models.Identifiers;
+using Apps.Salsify.Models.Identifiers.Optional;
 using Apps.Salsify.Models.Requests.Product;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Tests.Salsify.Base;
 
@@ -62,5 +64,21 @@ public class ProductActionTests : TestBaseMultipleConnections
         // Assert
         Assert.IsNotNull(result.Content);
         TestContext.WriteLine(result.Content.Name);
+    }
+
+    [TestMethod, TargetConnections]
+    public async Task UploadProduct_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var actions = new ProductActions(context, FileManager);
+        var uploadInput = new UploadProductRequest
+        {
+            Content = new FileReference { Name = "test.html" },
+            Locale = "fr-CA"
+        };
+        var productIdentifier = new ProductOptionalIdentifier { };
+
+        // Act
+        await actions.UploadProduct(uploadInput, productIdentifier);
     }
 }

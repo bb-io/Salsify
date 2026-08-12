@@ -14,9 +14,6 @@ public class ProductEntity
     
     [JsonProperty("salsify:updated_at")]
     public DateTime UpdatedAt { get; set; }
-
-    [JsonProperty("salsify:version")]
-    public int Version { get; set; }
     
     [JsonExtensionData]
     public Dictionary<string, JToken> RawValues { get; set; } = new();
