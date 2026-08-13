@@ -33,4 +33,10 @@ public class AssetEntity
 
     [JsonProperty("salsify:format")]
     public string? Format { get; set; }
+
+    public override string ToString()
+    {
+        string displayName = string.IsNullOrWhiteSpace(Name) ? Id : Name;
+        return $"{displayName} (Status: {Status})";
+    }
 }

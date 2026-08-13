@@ -1,4 +1,5 @@
 using Apps.Salsify.Actions;
+using Apps.Salsify.Models.Identifiers;
 using Apps.Salsify.Models.Requests.Asset;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Tests.Salsify.Base;
@@ -23,6 +24,37 @@ public class AssetActionTests : TestBaseMultipleConnections
         
         // Assert
         PrintResult(result);
+        Assert.IsNotNull(result);
+    }
+    
+    [TestMethod, TargetConnections]
+    public async Task GetAsset_ReturnsAsset(InvocationContext context)
+    {
+        // Arrange
+        var actions = new AssetActions(context, FileManager);
+        var assetIdentifier = new AssetIdentifier { AssetId = "1b58312628bafc4f5ffbea3b66d3cdcf2012eca8" };
+
+        // Act
+        var result = await actions.GetAsset(assetIdentifier);
+        
+        // Assert
+        PrintResult(result);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod, TargetConnections]
+    public async Task DownloadAsset_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var actions = new AssetActions(context, FileManager);
+        var assetIdentifier = new AssetIdentifier { AssetId = "1b58312628bafc4f5ffbea3b66d3cdcf2012eca8" };
+
+        // Act
+        var result = await actions.DownloadAsset(assetIdentifier);
+        
+        // Assert
+        TestContext.WriteLine(result.Content.Name);
+        TestContext.WriteLine(result.Content.ContentType);
         Assert.IsNotNull(result);
     }
 }
