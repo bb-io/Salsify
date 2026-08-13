@@ -67,7 +67,8 @@ public class AssetActionTests : TestBaseMultipleConnections
         var uploadInput = new UploadAssetRequest
         {
             Content = new FileReference { Name = "test123.xlsx" },
-            ListName = "lookup table testing - Blackbird"
+            ListName = "lookup table testing - Blackbird",
+            Name = "updated name 123"
         };
 
         // Act

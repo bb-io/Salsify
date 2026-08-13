@@ -134,6 +134,23 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
         await Client.ExecuteWithErrorHandling(finalizeRequest);
 
         var asset = await AwaitCreatedAsset(mount.Upload.List.Filter, knownAssetIds);
+        
+        if (string.IsNullOrEmpty(uploadInput.Name))
+            return new(asset);
+
+        var updateNameBody = new Dictionary<string, string> { { "salsify:name", uploadInput.Name } };
+        try
+        {
+            var updateNameRequest = new SalsifyRequest($"digital_assets/{asset.Id}", Method.Put).WithJsonBody(updateNameBody);
+            await Client.ExecuteWithErrorHandling(updateNameRequest);
+        }
+        catch (PluginApplicationException exception)
+        {
+            context.Logger?.LogError(
+                $"Asset '{asset.Id}' was created but renaming it to '{uploadInput.Name}' failed: {exception.Message}. " +
+                $"Current name is '{asset.Name}'.", []);
+        }
+
         return new(asset);
     }
     
