@@ -1,3 +1,3 @@
-namespace Apps.Salsify.Models.Responses.Asset.Api;
+namespace Apps.Salsify.Models.Responses.Asset;
 
 public record SearchAssetsResponse(AssetResponse[] Assets);

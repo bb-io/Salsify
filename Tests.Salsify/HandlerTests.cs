@@ -63,4 +63,18 @@ public class HandlerTests : TestBaseMultipleConnections
         PrintDataHandlerResult(result);
         Assert.IsNotNull(result);
     }
+    
+    [TestMethod, TargetConnections]
+    public async Task AssetListNameDataHandler_ReturnsAssets(InvocationContext context)
+    {
+        // Arrange
+        var handler = new AssetListNameDataHandler(context);
+    
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext { SearchString = "" }, CancellationToken.None);
+    
+        // Assert
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
 }
