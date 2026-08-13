@@ -13,8 +13,6 @@ public class UploadAssetRequest
     [Display("Custom asset name")]
     public string? Name { get; set; }
 
-    [Display("Asset list name", 
-        Description = "If empty, an asset will not be associated with any list, mirroring the 'Do not manage via list' UI option in Salsify")]
-    [DataSource(typeof(AssetListNameDataHandler))]
-    public string? ListName { get; set; }
+    [Display("Asset list name"), DataSource(typeof(AssetListNameDataHandler))]
+    public string ListName { get; set; } = string.Empty;
 }

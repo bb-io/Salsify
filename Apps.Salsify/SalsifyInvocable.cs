@@ -11,8 +11,11 @@ public class SalsifyInvocable : BaseInvocable
         InvocationContext.AuthenticationCredentialsProviders.ToArray();
 
     protected SalsifyClient Client { get; }
-    public SalsifyInvocable(InvocationContext invocationContext) : base(invocationContext)
+    protected ExternalRestClient ExternalClient { get; }
+
+    protected SalsifyInvocable(InvocationContext invocationContext) : base(invocationContext)
     {
         Client = new(Creds);
+        ExternalClient = new();
     }
 }

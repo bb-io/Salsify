@@ -55,7 +55,9 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
     [Action("Get asset", Description = "Get details for a specific asset")]
     public async Task<AssetResponse> GetAsset([ActionParameter] AssetIdentifier assetIdentifier)
     {
-        var asset = await FetchAsset(assetIdentifier.AssetId);
+        var request = new SalsifyRequest($"digital_assets/{assetIdentifier.AssetId}");
+        var asset = await Client.ExecuteWithErrorHandling<AssetEntity>(request);
+        
         return new(asset);
     }
 
@@ -83,56 +85,79 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
     }
 
     [Action("Upload asset", Description = "Create a new asset from a file")]
-    public async Task UploadAsset([ActionParameter] UploadAssetRequest uploadInput)
+    public async Task<AssetResponse> UploadAsset([ActionParameter] UploadAssetRequest uploadInput)
     {
         await using var fileStream = await fileManagementClient.DownloadAsync(uploadInput.Content);
         var fileBytes = await fileStream.GetByteData();
         string fileName = uploadInput.Content.Name;
-        string contentType = uploadInput.Content.ContentType;
 
-        context.Logger?.LogInformation(uploadInput.Content.Url, []);
-        
-        // var mountBody = new Dictionary<string, object>
-        // {
-        //     { "asset_count", 1 },
-        //     { "property_values", Array.Empty<string>() },
-        //     { "source_urls", Array.Empty<string>() },
-        //     { "status", new { total = 0, uploaded = 0, errors = Array.Empty<string>() } }
-        // };
-        // if (!string.IsNullOrWhiteSpace(uploadInput.ListName))
-        //     mountBody["list_name"] = uploadInput.ListName;
-        //
-        // var mountRequest = new SalsifyRequest("digital_asset_uploads", Method.Post, ApiVersion.Unversioned).WithJsonBody(mountBody);
-        // var mountResponse = await Client.ExecuteWithErrorHandling<MountAssetResponse>(mountRequest);
-        //
-        // var cloudinaryUploadRequest = new RestRequest(mountResponse.Url, Method.Post);
-        // foreach (var (key, value) in mountResponse.FormData)
-        //     cloudinaryUploadRequest.AddParameter(key, value.ToString());
-        // cloudinaryUploadRequest.AddFile("file", fileBytes, fileName, contentType);
-        //
-        // var cloudinaryUploadResponse = ExternalRestClient.ExecuteWithErrorHandling<CloudinaryUploadAssetResponse>(cloudinaryUploadRequest);
-        //
-        // int uploadId = mountResponse.Upload.Id;
-        // var finalizeUploadRequest = new SalsifyRequest($"digital_asset_uploads/{uploadId}", Method.Put, ApiVersion.Unversioned)
-        //     .WithJsonBody(new
-        //     {
-        //         status = new
-        //         {
-        //             total = 1,
-        //             uploaded = 1,
-        //             errors = Array.Empty<string>()
-        //         }
-        //     });
-        // await Client.ExecuteWithErrorHandling(finalizeUploadRequest);
-        //
-        // string uploadedAssetId = cloudinaryUploadResponse.Result.AssetId;
-        // var uploadedAsset = await FetchAsset(uploadedAssetId);
-        // return new(uploadedAsset);
+        var mountBody = new Dictionary<string, object>
+        {
+            ["list_name"] = uploadInput.ListName,
+            ["asset_count"] = 1,
+            ["property_values"] = Array.Empty<string>(),
+            ["source_urls"] = Array.Empty<string>(),
+            ["status"] = new { total = 0, uploaded = 0, errors = Array.Empty<string>() }
+        };
+
+        var mountRequest = new SalsifyRequest("digital_asset_uploads", Method.Post, ApiVersion.Unversioned).WithJsonBody(mountBody);
+        var mount = await Client.ExecuteWithErrorHandling<MountAssetResponse>(mountRequest);
+
+        // The list may already hold assets from a previous run, so snapshot it before uploading
+        // and diff afterwards - that is the only way to identify the asset we just created
+        var knownAssets = await ListAssets(mount.Upload.List.Filter);
+        var knownAssetIds = knownAssets.Select(x => x.Id).ToHashSet(StringComparer.Ordinal);
+
+        var cloudinaryRequest = new RestRequest(mount.Mount.Url, Method.Post)
+        {
+            AlwaysMultipartFormData = true,
+            MultipartFormQuoteParameters = true
+        };
+        foreach (var (key, value) in mount.Mount.FormData)
+            cloudinaryRequest.AddParameter(key, value.ToString());
+        cloudinaryRequest.AddFile("file", fileBytes, fileName, uploadInput.Content.ContentType);
+
+        await ExternalClient.ExecuteWithErrorHandling(cloudinaryRequest);
+
+        // Cloudinary notifies Salsify separately via the notification_url in the signed payload,
+        // which is what actually creates the asset
+        var finalizeRequest = new SalsifyRequest($"digital_asset_uploads/{mount.Upload.Id}", Method.Put, ApiVersion.Unversioned)
+            .WithJsonBody(new
+            {
+                status = new
+                {
+                    total = 1, 
+                    uploaded = 1, 
+                    errors = Array.Empty<string>()
+                }
+            });
+        await Client.ExecuteWithErrorHandling(finalizeRequest);
+
+        var asset = await AwaitCreatedAsset(mount.Upload.List.Filter, knownAssetIds);
+        return new(asset);
     }
-
-    private async Task<AssetEntity> FetchAsset(string assetId)
+    
+    private async Task<AssetEntity> AwaitCreatedAsset(string listFilter, HashSet<string> knownAssetIds)
     {
-        var request = new SalsifyRequest($"digital_assets/{assetId}");
-        return await Client.ExecuteWithErrorHandling<AssetEntity>(request);
+        for (int attempt = 0; attempt < 15; attempt++)
+        {
+            await Task.Delay(1500);
+
+            var assets = await ListAssets(listFilter);
+            var created = assets.FirstOrDefault(x => !knownAssetIds.Contains(x.Id));
+            if (created is not null) 
+                return created;
+        }
+
+        throw new PluginApplicationException(
+            "The file was uploaded but Salsify did not finish processing it in time. " +
+            "It may still appear in the digital assets library shortly");
+    }
+    
+    private Task<List<AssetEntity>> ListAssets(string filter)
+    {
+        var request = new SalsifyRequest("digital_assets")
+            .AddOrUpdateParameter(new QueryParameter("filter", filter));
+        return Client.PaginateCursor<ListAssetsResponse, AssetEntity>(request);
     }
 }

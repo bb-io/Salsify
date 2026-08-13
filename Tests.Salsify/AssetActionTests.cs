@@ -1,6 +1,7 @@
 using Apps.Salsify.Actions;
 using Apps.Salsify.Models.Identifiers;
 using Apps.Salsify.Models.Requests.Asset;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Tests.Salsify.Base;
 
@@ -55,6 +56,25 @@ public class AssetActionTests : TestBaseMultipleConnections
         // Assert
         TestContext.WriteLine(result.Content.Name);
         TestContext.WriteLine(result.Content.ContentType);
+        Assert.IsNotNull(result);
+    }
+    
+    [TestMethod, TargetConnections]
+    public async Task UploadAsset_ReturnsAsset(InvocationContext context)
+    {
+        // Arrange
+        var actions = new AssetActions(context, FileManager);
+        var uploadInput = new UploadAssetRequest
+        {
+            Content = new FileReference { Name = "test123.xlsx" },
+            ListName = "lookup table testing - Blackbird"
+        };
+
+        // Act
+        var result = await actions.UploadAsset(uploadInput);
+        
+        // Assert
+        PrintResult(result);
         Assert.IsNotNull(result);
     }
 }
