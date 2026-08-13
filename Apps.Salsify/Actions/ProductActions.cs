@@ -4,6 +4,7 @@ using Apps.Salsify.Constants;
 using Apps.Salsify.Converters.Product;
 using Apps.Salsify.Extensions;
 using Apps.Salsify.Helpers;
+using Apps.Salsify.Helpers.Validation;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Entities.Properties;
 using Apps.Salsify.Models.Identifiers;
@@ -33,7 +34,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     [Action("Search products", Description = "Search products")]
     public async Task<SearchProductsResponse> SearchProducts([ActionParameter] SearchProductsRequest searchInput)
     {
-        searchInput.Validate();
+        searchInput.ValidateDates();
 
         var current = await Client.GetCurrentOrgInfo();
         string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
