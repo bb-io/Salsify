@@ -22,6 +22,7 @@ namespace Apps.Salsify.Actions;
 [ActionList("Assets")]
 public class AssetActions(InvocationContext context, IFileManagementClient fileManagementClient) : SalsifyInvocable(context)
 {
+    // https://developers.salsify.com/reference/bulk-read-digital-assets
     [Action("Search assets", Description = "Search assets")]
     public async Task<SearchAssetsResponse> SearchAssets([ActionParameter] SearchAssetsRequest searchInput)
     {
@@ -52,6 +53,7 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
         return new(result);
     }
 
+    // https://developers.salsify.com/reference/get-digital-asset
     [Action("Get asset", Description = "Get details for a specific asset")]
     public async Task<AssetResponse> GetAsset([ActionParameter] AssetIdentifier assetIdentifier)
     {
@@ -61,6 +63,7 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
         return new(asset);
     }
 
+    // https://developers.salsify.com/reference/digital-asset-object
     [Action("Download asset", Description = "Download a specific asset")]
     public async Task<FileResponse> DownloadAsset([ActionParameter] AssetIdentifier assetIdentifier)
     {
@@ -84,6 +87,7 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
         return new(file);
     }
 
+    // Follow the UI asset upload flow to get all endpoints needed
     [Action("Upload asset", Description = "Create a new asset from a file")]
     public async Task<AssetResponse> UploadAsset([ActionParameter] UploadAssetRequest uploadInput)
     {
@@ -146,7 +150,7 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
         }
         catch (PluginApplicationException exception)
         {
-            context.Logger?.LogError(
+            InvocationContext.Logger?.LogError(
                 $"Asset '{asset.Id}' was created but renaming it to '{uploadInput.Name}' failed: {exception.Message}. " +
                 $"Current name is '{asset.Name}'.", []);
         }

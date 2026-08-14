@@ -12,6 +12,7 @@ public class CreatePropertyRequest
     [Display("Property type", Description = "String by default"), StaticDataSource(typeof(PropertyTypeDataHandler))]
     public string? Type { get; set; }
 
-    [Display("Property name", Description = "If not specified, property name will be filled with property ID value (recommended)")]
+    [Display("Property name", 
+        Description = "If not specified, property name will be automatically filled with property ID value. Recommended to leave empty")]
     public string? Name { get; set; }
 }

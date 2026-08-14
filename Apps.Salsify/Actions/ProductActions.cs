@@ -150,7 +150,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
 
     // https://developers.salsify.com/reference/add-a-product
     [Action("Create product", Description = "Create a new product")]
-    public async Task CreateProduct([ActionParameter] CreateProductRequest createInput)
+    public async Task<ProductResponse> CreateProduct([ActionParameter] CreateProductRequest createInput)
     {
         var current = await Client.GetCurrentOrgInfo();
         string idProperty = current.GetRolePropertyId(RolePropertyNames.ProductId) ?? 
@@ -161,15 +161,17 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
             { idProperty, createInput.Id }
         };
 
+        string? nameProperty = null;
         if (!string.IsNullOrWhiteSpace(createInput.Name))
         {
-            string nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName) ?? 
-                                  throw new PluginMisconfigurationException("Product name is not configured in your organization");
+            nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName) ?? 
+                           throw new PluginMisconfigurationException("Product name is not configured in your organization");
             body[nameProperty] = createInput.Name;
         }
 
         var request = new SalsifyRequest("products", Method.Post).AddJsonBody(body);
-        await Client.ExecuteWithErrorHandling(request);
+        var response = await Client.ExecuteWithErrorHandling<ProductEntity>(request);
+        return new(response, nameProperty);
     }
 
     // https://developers.salsify.com/reference/delete-product

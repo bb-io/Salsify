@@ -88,22 +88,18 @@ public class ProductActionTests : TestBaseMultipleConnections
     {
         // Arrange
         var actions = new ProductActions(context, FileManager);
-        string id = "test from tests bb2";
         var createInput = new CreateProductRequest
         {
-            Id = id,
+            Id = "test from tests bb",
             Name = "test name 123"
         };
 
         // Act
-        await actions.CreateProduct(createInput);
+        var result = await actions.CreateProduct(createInput);
 
         // Assert
-        var productIdentifier = new ProductIdentifier { ProductId = id };
-        var createdProduct = await actions.GetProduct(productIdentifier);
-        
-        Assert.IsNotNull(createdProduct);
-        PrintResult(createdProduct);
+        Assert.IsNotNull(result);
+        PrintResult(result);
     }
 
     [TestMethod, TargetConnections]
