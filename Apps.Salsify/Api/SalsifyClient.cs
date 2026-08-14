@@ -132,6 +132,17 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         return response.Data ?? throw new PluginApplicationException("Salsify returned no data");
     }
     
+    public async Task ExecuteGraphQl(GraphQlRequest request)
+    {
+        if (request.DeclaresVariable(GraphQlRequest.OrganizationVariable))
+            request = request.WithVariable(GraphQlRequest.OrganizationVariable, creds.Get(CredsNames.OrgId).Value.Trim());
+        
+        var response = await ExecuteWithErrorHandling<GraphQlResponse<object>>(request);
+
+        if (response.Errors.Count > 0)
+            throw new PluginApplicationException(string.Join("; ", response.Errors.Select(x => x.Message)));
+    }
+    
     public override async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)
     {
         PrepareRequest(request);

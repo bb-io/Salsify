@@ -1,5 +1,6 @@
 using Apps.Salsify.Api;
 using Apps.Salsify.Constants;
+using Apps.Salsify.Constants.GraphQl;
 using Apps.Salsify.Models.Entities.Properties;
 using Apps.Salsify.Models.Responses.Property.Api;
 using Blackbird.Applications.Sdk.Common.Dynamic;

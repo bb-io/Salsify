@@ -81,10 +81,10 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     public async Task<FileResponse> DownloadProduct(
         [ActionParameter] ProductIdentifier productIdentifier,
         [ActionParameter] DownloadProductRequest downloadInput,
-        [ActionParameter] OptionalLocaleIdentifier localeIdentifier)
+        [ActionParameter] LocaleOptionalIdentifier identifier)
     {
         var current = await Client.GetCurrentOrgInfo();
-        string locale = current.ResolveLocale(localeIdentifier.Locale);
+        string locale = current.ResolveLocale(identifier.Locale);
 
         var getProductRequest = new SalsifyRequest($"products/{productIdentifier.ProductId}");
         var product = await Client.ExecuteWithErrorHandling<ProductEntity>(getProductRequest);
@@ -190,11 +190,11 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
         [ActionParameter] ProductIdentifier productIdentifier,
         [ActionParameter] PropertyIdentifier propertyIdentifier,
         [ActionParameter] UpdatePropertyValueRequest updateInput,
-        [ActionParameter] OptionalLocaleIdentifier localeIdentifier)
+        [ActionParameter] LocaleOptionalIdentifier identifier)
     {
         string propertyId = propertyIdentifier.PropertyId;
         string productId = productIdentifier.ProductId;
-        string? locale = localeIdentifier.Locale;
+        string? locale = identifier.Locale;
 
         var propertyRequest = new SalsifyRequest($"properties/{propertyId}");
         var property = await Client.ExecuteWithErrorHandling<PropertyEntity>(propertyRequest);

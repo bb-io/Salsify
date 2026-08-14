@@ -2,6 +2,7 @@
 using Apps.Salsify.Models.Identifiers;
 using Apps.Salsify.Models.Identifiers.Optional;
 using Apps.Salsify.Models.Requests.Property;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Tests.Salsify.Base;
 
@@ -91,17 +92,27 @@ public class PropertyActionTests : TestBaseMultipleConnections
     {
         // Arrange
         var actions = new PropertyActions(context, FileManager);
-        var downloadRequest = new DownloadPicklistValuesRequest
-        {
-            PicklistId = "Material_LOC"
-        };
-        var localeIdentifier = new OptionalLocaleIdentifier { Locale = "fr-CA" };
+        var picklistIdentifier = new PicklistIdentifier { PicklistId = "Material_LOC" };
+        var localeIdentifier = new LocaleOptionalIdentifier { Locale = "fr-CA" };
 
         // Act
-        var result = await actions.DownloadPicklistValues(downloadRequest, localeIdentifier);
+        var result = await actions.DownloadPicklistValues(picklistIdentifier, localeIdentifier);
         
         // Assert
         TestContext.WriteLine(result.Content.Name);
         Assert.IsNotNull(result);
+    }
+    
+    [TestMethod, TargetConnections]
+    public async Task UploadPicklistValues_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var actions = new PropertyActions(context, FileManager);
+        var uploadInput = new UploadPicklistValuesRequest { Content = new FileReference { Name = "test_loc.html" } };
+        var localeIdentifier = new LocaleIdentifier { Locale = "en-CA" };
+        var picklistIdentifier = new PicklistOptionalIdentifier { };
+
+        // Act
+        await actions.UploadPicklistValues(uploadInput, localeIdentifier, picklistIdentifier);
     }
 }

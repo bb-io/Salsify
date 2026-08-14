@@ -53,7 +53,7 @@ public class ProductActionTests : TestBaseMultipleConnections
         // Arrange
         var actions = new ProductActions(context, FileManager);
         var identifier = new ProductIdentifier { ProductId = "partcodeid" };
-        var localeIdentifier = new OptionalLocaleIdentifier { Locale = "en-US" };
+        var localeIdentifier = new LocaleOptionalIdentifier { Locale = "en-US" };
         var downloadInput = new DownloadProductRequest
         {
             OnlyLocalizableProperties = false,
@@ -126,7 +126,7 @@ public class ProductActionTests : TestBaseMultipleConnections
         
         var productIdentifier = new ProductIdentifier { ProductId = "partcodeid" };
         var propertyIdentifier = new PropertyIdentifier { PropertyId = propertyId };
-        var localeIdentifier = new OptionalLocaleIdentifier { Locale = "fr-CA" };
+        var localeIdentifier = new LocaleOptionalIdentifier { Locale = "fr-CA" };
         var updateInput = new UpdatePropertyValueRequest
         {
             PropertyValue = propertyValue,

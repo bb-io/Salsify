@@ -1,4 +1,4 @@
-namespace Apps.Salsify.Constants;
+namespace Apps.Salsify.Constants.GraphQl;
 
 public static class GraphQlQueries
 {
