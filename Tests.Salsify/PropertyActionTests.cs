@@ -1,5 +1,6 @@
 ﻿using Apps.Salsify.Actions;
 using Apps.Salsify.Models.Identifiers;
+using Apps.Salsify.Models.Identifiers.Optional;
 using Apps.Salsify.Models.Requests.Property;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Tests.Salsify.Base;
@@ -13,7 +14,7 @@ public class PropertyActionTests : TestBaseMultipleConnections
     public async Task SearchProperties_ReturnsProperties(InvocationContext context)
     {
         // Arrange
-        var actions = new PropertyActions(context);
+        var actions = new PropertyActions(context, FileManager);
         var input = new SearchPropertiesRequest
         {
             NameContains = "",
@@ -33,7 +34,7 @@ public class PropertyActionTests : TestBaseMultipleConnections
     public async Task GetProperty_ReturnsProperty(InvocationContext context)
     {
         // Arrange
-        var actions = new PropertyActions(context);
+        var actions = new PropertyActions(context, FileManager);
         var input = new PropertyIdentifier { PropertyId = "s-cd3753af-1932-46bc-b8da-9ae44cbaeb86" };
 
         // Act
@@ -48,7 +49,7 @@ public class PropertyActionTests : TestBaseMultipleConnections
     public async Task CreateProperty_ReturnsCreatedProperty(InvocationContext context)
     {
         // Arrange
-        var actions = new PropertyActions(context);
+        var actions = new PropertyActions(context, FileManager);
         var input = new CreatePropertyRequest
         {
             PropertyId = "your-new-property",
@@ -67,7 +68,7 @@ public class PropertyActionTests : TestBaseMultipleConnections
     public async Task UpdateProperty_IsSuccess(InvocationContext context)
     {
         // Arrange
-        var actions = new PropertyActions(context);
+        var actions = new PropertyActions(context, FileManager);
         
         string newPropertyName = "your-updated-property1";
         var propertyIdentifier = new PropertyIdentifier { PropertyId = "your-new-property" };
@@ -83,5 +84,24 @@ public class PropertyActionTests : TestBaseMultipleConnections
         var updatedProperty = await actions.GetProperty(propertyIdentifier);
         Assert.AreEqual(updatedProperty.Name, newPropertyName);
         PrintResult(updatedProperty);
+    }
+    
+    [TestMethod, TargetConnections]
+    public async Task DownloadPicklistValues_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var actions = new PropertyActions(context, FileManager);
+        var downloadRequest = new DownloadPicklistValuesRequest
+        {
+            PicklistId = "Material_LOC"
+        };
+        var localeIdentifier = new OptionalLocaleIdentifier { Locale = "fr-CA" };
+
+        // Act
+        var result = await actions.DownloadPicklistValues(downloadRequest, localeIdentifier);
+        
+        // Assert
+        TestContext.WriteLine(result.Content.Name);
+        Assert.IsNotNull(result);
     }
 }

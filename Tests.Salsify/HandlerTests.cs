@@ -77,4 +77,18 @@ public class HandlerTests : TestBaseMultipleConnections
         PrintDataHandlerResult(result);
         Assert.IsNotNull(result);
     }
+    
+    [TestMethod, TargetConnections]
+    public async Task PicklistPropertyDataHandler_ReturnsPicklistProperties(InvocationContext context)
+    {
+        // Arrange
+        var handler = new PicklistPropertyDataHandler(context);
+    
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext { SearchString = "_LOC" }, CancellationToken.None);
+    
+        // Assert
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
 }
