@@ -62,4 +62,26 @@ public class PropertyActionTests : TestBaseMultipleConnections
         PrintResult(response);
         Assert.IsNotNull(response);
     }
+    
+    [TestMethod, TargetConnections]
+    public async Task UpdateProperty_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var actions = new PropertyActions(context);
+        
+        string newPropertyName = "your-updated-property1";
+        var propertyIdentifier = new PropertyIdentifier { PropertyId = "your-new-property" };
+        var input = new UpdatePropertyRequest
+        {
+            Name = newPropertyName
+        };
+
+        // Act
+        await actions.UpdateProperty(propertyIdentifier, input);
+
+        // Assert
+        var updatedProperty = await actions.GetProperty(propertyIdentifier);
+        Assert.AreEqual(updatedProperty.Name, newPropertyName);
+        PrintResult(updatedProperty);
+    }
 }
