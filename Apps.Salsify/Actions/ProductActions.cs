@@ -80,10 +80,11 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     [Action("Download product", Description = "Download product content")]
     public async Task<FileResponse> DownloadProduct(
         [ActionParameter] ProductIdentifier productIdentifier,
-        [ActionParameter] DownloadProductRequest downloadInput)
+        [ActionParameter] DownloadProductRequest downloadInput,
+        [ActionParameter] OptionalLocaleIdentifier localeIdentifier)
     {
         var current = await Client.GetCurrentOrgInfo();
-        string locale = current.ResolveLocale(downloadInput.Locale);
+        string locale = current.ResolveLocale(localeIdentifier.Locale);
 
         var getProductRequest = new SalsifyRequest($"products/{productIdentifier.ProductId}");
         var product = await Client.ExecuteWithErrorHandling<ProductEntity>(getProductRequest);
@@ -121,6 +122,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     [Action("Upload product", Description = "Upload product content from a file")]
     public async Task UploadProduct(
         [ActionParameter] UploadProductRequest uploadInput,
+        [ActionParameter] LocaleIdentifier localeIdentifier,
         [ActionParameter] ProductOptionalIdentifier productIdentifier)
     {
         await using var fileStream = await fileManagementClient.DownloadAsync(uploadInput.Content);
@@ -133,14 +135,14 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
                            throw new PluginMisconfigurationException("Product ID was not found in the file. Please provide it in the input");
         
         var current = await Client.GetCurrentOrgInfo();
-        current.ValidateLocale(uploadInput.Locale);
+        current.ValidateLocale(localeIdentifier.Locale);
 
         var values = ProductJsonConverter.ParseValues(html);
         if (values.Count == 0)
             throw new PluginMisconfigurationException("The file contains no property values");
 
         var definitions = await PropertyHelper.GetDefinitions(Client, values.Keys);
-        var updateBody = ProductJsonConverter.BuildUpdateBody(values, definitions, uploadInput.Locale);
+        var updateBody = ProductJsonConverter.BuildUpdateBody(values, definitions, localeIdentifier.Locale);
         if (updateBody.Count == 0)
             throw new PluginMisconfigurationException($"Nothing to write for product '{productId}'");
 
@@ -187,11 +189,12 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     public async Task UpdatePropertyValue(
         [ActionParameter] ProductIdentifier productIdentifier,
         [ActionParameter] PropertyIdentifier propertyIdentifier,
-        [ActionParameter] UpdatePropertyValueRequest updateInput)
+        [ActionParameter] UpdatePropertyValueRequest updateInput,
+        [ActionParameter] OptionalLocaleIdentifier localeIdentifier)
     {
         string propertyId = propertyIdentifier.PropertyId;
         string productId = productIdentifier.ProductId;
-        string? locale = updateInput.Locale;
+        string? locale = localeIdentifier.Locale;
 
         var propertyRequest = new SalsifyRequest($"properties/{propertyId}");
         var property = await Client.ExecuteWithErrorHandling<PropertyEntity>(propertyRequest);

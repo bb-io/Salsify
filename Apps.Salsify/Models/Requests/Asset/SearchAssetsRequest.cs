@@ -1,7 +1,5 @@
-using Apps.Salsify.Handlers.Static;
 using Apps.Salsify.Helpers.Validation.Models;
 using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Dictionaries;
 
 namespace Apps.Salsify.Models.Requests.Asset;
 

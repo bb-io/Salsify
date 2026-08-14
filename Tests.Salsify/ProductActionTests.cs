@@ -53,14 +53,14 @@ public class ProductActionTests : TestBaseMultipleConnections
         // Arrange
         var actions = new ProductActions(context, FileManager);
         var identifier = new ProductIdentifier { ProductId = "partcodeid" };
+        var localeIdentifier = new OptionalLocaleIdentifier { Locale = "en-US" };
         var downloadInput = new DownloadProductRequest
         {
             OnlyLocalizableProperties = false,
-            Locale = "en-US",
         };
 
         // Act
-        var result = await actions.DownloadProduct(identifier, downloadInput);
+        var result = await actions.DownloadProduct(identifier, downloadInput, localeIdentifier);
 
         // Assert
         Assert.IsNotNull(result.Content);
@@ -75,12 +75,12 @@ public class ProductActionTests : TestBaseMultipleConnections
         var uploadInput = new UploadProductRequest
         {
             Content = new FileReference { Name = "test.html" },
-            Locale = "fr-CA"
         };
+        var localeIdentifier = new LocaleIdentifier { Locale = "fr-CA" };
         var productIdentifier = new ProductOptionalIdentifier { };
 
         // Act
-        await actions.UploadProduct(uploadInput, productIdentifier);
+        await actions.UploadProduct(uploadInput, localeIdentifier, productIdentifier);
     }
 
     [TestMethod, TargetConnections]
@@ -126,13 +126,13 @@ public class ProductActionTests : TestBaseMultipleConnections
         
         var productIdentifier = new ProductIdentifier { ProductId = "partcodeid" };
         var propertyIdentifier = new PropertyIdentifier { PropertyId = propertyId };
+        var localeIdentifier = new OptionalLocaleIdentifier { Locale = "fr-CA" };
         var updateInput = new UpdatePropertyValueRequest
         {
             PropertyValue = propertyValue,
-            Locale = "fr-CA"
         };
 
         // Act
-        await actions.UpdatePropertyValue(productIdentifier, propertyIdentifier, updateInput);
+        await actions.UpdatePropertyValue(productIdentifier, propertyIdentifier, updateInput, localeIdentifier);
     }
 }
