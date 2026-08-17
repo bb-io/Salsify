@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Apps.Salsify.Extensions;
 
 public static class StringExtensions
@@ -17,4 +19,6 @@ public static class StringExtensions
 
         return source;
     }
+    
+    public static string ToUtf8String(this byte[] bytes) => Encoding.UTF8.GetString(bytes).TrimStart('\uFEFF');
 }

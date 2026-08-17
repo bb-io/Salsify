@@ -92,24 +92,4 @@ public class AssetActionTests : TestBaseMultipleConnections
         // Act
         await actions.ReplaceAsset(assetIdentifier, replaceInput);
     }
-
-    [TestMethod, TargetConnections]
-    public async Task DownloadLookupTable_IsSuccess(InvocationContext context)
-    {
-        // Arrange
-        var actions = new AssetActions(context, FileManager);
-        var tableIdentifier = new LookupTableIdentifier { AssetId = "525787423bdbfe2d6cf7eec6a24d018f56f7ce9d" };
-        var downloadInput = new DownloadLookupTableRequest
-        {
-            ColumnLetters = ["c", "d", "b"],
-            SheetName = "Sheet1",
-        };
-
-        // Act
-        var result = await actions.DownloadLookupTable(tableIdentifier, downloadInput);
-        
-        // Assert
-        PrintFileResult(result.Content);
-        Assert.IsNotNull(result);
-    }
 }

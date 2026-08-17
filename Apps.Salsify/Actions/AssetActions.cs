@@ -1,7 +1,5 @@
-using System.Net.Mime;
 using Apps.Salsify.Api;
 using Apps.Salsify.Api.Utility;
-using Apps.Salsify.Converters.LookupTable;
 using Apps.Salsify.Extensions;
 using Apps.Salsify.Helpers.Asset;
 using Apps.Salsify.Helpers.Validation;
@@ -18,7 +16,6 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Utils.Extensions.Http;
-using Blackbird.Filters.Coders;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 
@@ -62,7 +59,8 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
     [Action("Get asset", Description = "Get details for a specific asset")]
     public async Task<AssetResponse> GetAsset([ActionParameter] AssetIdentifier assetIdentifier)
     {
-        var asset = await FetchAsset(assetIdentifier.AssetId);
+        var helper = new AssetHelper(InvocationContext);
+        var asset = await helper.GetAsset(assetIdentifier.AssetId);
         return new(asset);
     }
 
@@ -70,7 +68,7 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
     [Action("Download asset", Description = "Download a specific asset")]
     public async Task<FileResponse> DownloadAsset([ActionParameter] AssetIdentifier assetIdentifier)
     {
-        var assetHelper = new AssetFileHelper(InvocationContext);
+        var assetHelper = new AssetHelper(InvocationContext);
         var downloadedAsset = await assetHelper.DownloadAsset(assetIdentifier.AssetId);
         
         await using var stream = new MemoryStream(downloadedAsset.Bytes);
@@ -83,63 +81,33 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
     [Action("Upload asset", Description = "Create a new asset from a file")]
     public async Task<AssetResponse> UploadAsset([ActionParameter] UploadAssetRequest uploadInput)
     {
+        var helper = new AssetHelper(InvocationContext);
+        
         await using var fileStream = await fileManagementClient.DownloadAsync(uploadInput.Content);
         var fileBytes = await fileStream.GetByteData();
 
-        var mountBody = new Dictionary<string, object>
-        {
-            ["list_name"] = uploadInput.ListName,
-            ["asset_count"] = 1,
-            ["property_values"] = Array.Empty<string>(),
-            ["source_urls"] = Array.Empty<string>(),
-            ["status"] = new { total = 0, uploaded = 0, errors = Array.Empty<string>() }
-        };
-
-        var mountRequest = new SalsifyRequest("digital_asset_uploads", Method.Post, ApiVersion.Unversioned).WithJsonBody(mountBody);
-        var mount = await Client.ExecuteWithErrorHandling<MountAssetResponse>(mountRequest);
-
-        // The list may already hold assets from a previous run, so snapshot it before uploading
-        // and diff afterwards - that is the only way to identify the asset we just created
-        var knownAssets = await ListAssets(mount.Upload.List.Filter);
-        var knownAssetIds = knownAssets.Select(x => x.Id).ToHashSet(StringComparer.Ordinal);
-
         string fileName = uploadInput.Content.Name;
         string contentType = uploadInput.Content.ContentType;
-        await UploadToMount(mount.Mount, fileBytes, fileName, contentType);
-
-        // Cloudinary notifies Salsify separately via the notification_url in the signed payload,
-        // which is what actually creates the asset
-        var finalizeRequest = new SalsifyRequest($"digital_asset_uploads/{mount.Upload.Id}", Method.Put, ApiVersion.Unversioned)
-            .WithJsonBody(new
-            {
-                status = new
-                {
-                    total = 1, 
-                    uploaded = 1, 
-                    errors = Array.Empty<string>()
-                }
-            });
-        await Client.ExecuteWithErrorHandling(finalizeRequest);
-
-        var asset = await AwaitCreatedAsset(mount.Upload.List.Filter, knownAssetIds);
+        
+        var uploadedAsset = await helper.UploadAsset(fileBytes, fileName, contentType, uploadInput.ListName);
+        string uploadedAssetId = uploadedAsset.Id;
         
         if (string.IsNullOrEmpty(uploadInput.Name))
-            return new(asset);
+            return new(uploadedAsset);
 
-        var updateNameBody = new Dictionary<string, string> { { "salsify:name", uploadInput.Name } };
         try
         {
-            var updateNameRequest = new SalsifyRequest($"digital_assets/{asset.Id}", Method.Put).WithJsonBody(updateNameBody);
-            await Client.ExecuteWithErrorHandling(updateNameRequest);
+            await helper.RenameAsset(uploadedAssetId, uploadInput.Name);
+            var updatedAsset = await helper.GetAsset(uploadedAssetId);
+            return new(updatedAsset);
         }
         catch (PluginApplicationException exception)
         {
             InvocationContext.Logger?.LogError(
-                $"Asset '{asset.Id}' was created but renaming it to '{uploadInput.Name}' failed: {exception.Message}. " +
-                $"Current name is '{asset.Name}'.", []);
+                $"Asset '{uploadedAssetId}' was created but renaming it to '{uploadInput.Name}' failed: {exception.Message}. " +
+                $"Current name is '{uploadedAsset.Name}'.", []);
+            return new(uploadedAsset);
         }
-
-        return new(asset);
     }
 
     // Follow the UI asset replacement flow to get all endpoints needed
@@ -149,7 +117,8 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
         [ActionParameter] AssetIdentifier assetIdentifier,
         [ActionParameter] ReplaceAssetRequest replaceInput)
     {
-        var asset = await FetchAsset(assetIdentifier.AssetId);
+        var helper = new AssetHelper(InvocationContext);
+        var asset = await helper.GetAsset(assetIdentifier.AssetId);
         
         await using var fileStream = await fileManagementClient.DownloadAsync(replaceInput.Content);
         var fileBytes = await fileStream.GetByteData();
@@ -172,60 +141,6 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
             });
 
         await Client.ExecuteWithErrorHandling(replaceRequest);
-    }
-
-    [Action("Download lookup table", Description = "Download lookup table file as HTML")]
-    public async Task<FileResponse> DownloadLookupTable(
-        [ActionParameter] LookupTableIdentifier tableIdentifier,
-        [ActionParameter] DownloadLookupTableRequest downloadInput)
-    {
-        downloadInput.Validate();
-        
-        var assetHelper = new AssetFileHelper(InvocationContext);
-        var downloadedAsset = await assetHelper.DownloadAsset(tableIdentifier.AssetId);
-
-        using var stream = new MemoryStream(downloadedAsset.Bytes);
-        var workbook = stream.ToWorkbook();
-        int firstRow = downloadInput.FirstRow ?? 2;
-        
-        var htmlDoc = LookupTableHtmlConverter.GenerateHtml(workbook, downloadInput.SheetName, downloadInput.ColumnLetters, firstRow);
-        
-        string fileName = $"{downloadedAsset.AssetName}_{downloadInput.SheetName}.html";
-        var coded = new HtmlCoder().Deserialize(htmlDoc.DocumentNode.OuterHtml, fileName);
-        coded.SystemReference.ContentId = tableIdentifier.AssetId;
-        
-        var outputFile = await fileManagementClient.UploadAsync(coded.ToStream(), MediaTypeNames.Text.Html, fileName);
-        return new(outputFile);
-    }
-    
-    private async Task<AssetEntity> AwaitCreatedAsset(string listFilter, HashSet<string> knownAssetIds)
-    {
-        for (int attempt = 0; attempt < 15; attempt++)
-        {
-            await Task.Delay(1500);
-
-            var assets = await ListAssets(listFilter);
-            var created = assets.FirstOrDefault(x => !knownAssetIds.Contains(x.Id));
-            if (created is not null) 
-                return created;
-        }
-
-        throw new PluginApplicationException(
-            "The file was uploaded but Salsify did not finish processing it in time. " +
-            "It may still appear in the digital assets library shortly");
-    }
-    
-    private Task<List<AssetEntity>> ListAssets(string filter)
-    {
-        var request = new SalsifyRequest("digital_assets")
-            .AddOrUpdateParameter(new QueryParameter("filter", filter));
-        return Client.PaginateCursor<ListAssetsResponse, AssetEntity>(request);
-    }
-
-    private Task<AssetEntity> FetchAsset(string assetId)
-    {
-        var request = new SalsifyRequest($"digital_assets/{assetId}");
-        return Client.ExecuteWithErrorHandling<AssetEntity>(request);
     }
     
     private Task<JObject> UploadToMount(MountResponse mount, byte[] fileBytes, string fileName, string contentType)

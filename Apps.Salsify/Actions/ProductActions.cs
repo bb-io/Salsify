@@ -21,7 +21,6 @@ using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Blackbird.Filters.Coders;
-using Blackbird.Filters.Extensions;
 using Blackbird.Filters.Shared;
 using RestSharp;
 
@@ -126,8 +125,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
         [ActionParameter] ProductOptionalIdentifier productIdentifier)
     {
         await using var fileStream = await fileManagementClient.DownloadAsync(uploadInput.Content);
-        var htmlStream = await fileStream.ToHtmlTransformationStream(uploadInput.Content.Name);
-        string html = htmlStream.ReadString();
+        string html = await fileStream.ToHtmlString(uploadInput.Content.Name);
 
         var coded = new HtmlCoder().Deserialize(html, uploadInput.Content.Name);
         string productId = productIdentifier.ProductId ?? 

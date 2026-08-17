@@ -2,7 +2,7 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using ClosedXML.Excel;
 
-namespace Apps.Salsify.Models.Requests.Asset;
+namespace Apps.Salsify.Models.Requests.LookupTable;
 
 public class DownloadLookupTableRequest
 {
