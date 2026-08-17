@@ -7,6 +7,9 @@ public class AssetEntity
     [JsonProperty("salsify:id")]
     public string Id { get; set; } = string.Empty;
 
+    [JsonProperty("salsify:system_id")]
+    public string SystemId { get; set; } = string.Empty;
+
     [JsonProperty("salsify:url")]
     public string? Url { get; set; }
 

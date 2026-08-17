@@ -78,4 +78,19 @@ public class AssetActionTests : TestBaseMultipleConnections
         PrintResult(result);
         Assert.IsNotNull(result);
     }
+    
+    [TestMethod, TargetConnections]
+    public async Task ReplaceAsset_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var actions = new AssetActions(context, FileManager);
+        var assetIdentifier = new AssetIdentifier { AssetId = "525787423bdbfe2d6cf7eec6a24d018f56f7ce9d" };
+        var replaceInput = new ReplaceAssetRequest
+        {
+            Content = new FileReference { Name = "test.xlsx" },
+        };
+
+        // Act
+        await actions.ReplaceAsset(assetIdentifier, replaceInput);
+    }
 }

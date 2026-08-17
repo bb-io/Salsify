@@ -15,6 +15,7 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Utils.Extensions.Http;
+using Newtonsoft.Json.Linq;
 using RestSharp;
 
 namespace Apps.Salsify.Actions;
@@ -57,9 +58,7 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
     [Action("Get asset", Description = "Get details for a specific asset")]
     public async Task<AssetResponse> GetAsset([ActionParameter] AssetIdentifier assetIdentifier)
     {
-        var request = new SalsifyRequest($"digital_assets/{assetIdentifier.AssetId}");
-        var asset = await Client.ExecuteWithErrorHandling<AssetEntity>(request);
-        
+        var asset = await FetchAsset(assetIdentifier.AssetId);
         return new(asset);
     }
 
@@ -93,7 +92,6 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
     {
         await using var fileStream = await fileManagementClient.DownloadAsync(uploadInput.Content);
         var fileBytes = await fileStream.GetByteData();
-        string fileName = uploadInput.Content.Name;
 
         var mountBody = new Dictionary<string, object>
         {
@@ -112,16 +110,9 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
         var knownAssets = await ListAssets(mount.Upload.List.Filter);
         var knownAssetIds = knownAssets.Select(x => x.Id).ToHashSet(StringComparer.Ordinal);
 
-        var cloudinaryRequest = new RestRequest(mount.Mount.Url, Method.Post)
-        {
-            AlwaysMultipartFormData = true,
-            MultipartFormQuoteParameters = true
-        };
-        foreach (var (key, value) in mount.Mount.FormData)
-            cloudinaryRequest.AddParameter(key, value.ToString());
-        cloudinaryRequest.AddFile("file", fileBytes, fileName, uploadInput.Content.ContentType);
-
-        await ExternalClient.ExecuteWithErrorHandling(cloudinaryRequest);
+        string fileName = uploadInput.Content.Name;
+        string contentType = uploadInput.Content.ContentType;
+        await UploadToMount(mount.Mount, fileBytes, fileName, contentType);
 
         // Cloudinary notifies Salsify separately via the notification_url in the signed payload,
         // which is what actually creates the asset
@@ -157,6 +148,38 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
 
         return new(asset);
     }
+
+    // Follow the UI asset replacement flow to get all endpoints needed
+    // For this, go to Assets -> any asset -> Actions -> Replace
+    [Action("Replace asset", Description = "Replace an existing asset with a file")]
+    public async Task ReplaceAsset(
+        [ActionParameter] AssetIdentifier assetIdentifier,
+        [ActionParameter] ReplaceAssetRequest replaceInput)
+    {
+        var asset = await FetchAsset(assetIdentifier.AssetId);
+        
+        await using var fileStream = await fileManagementClient.DownloadAsync(replaceInput.Content);
+        var fileBytes = await fileStream.GetByteData();
+        
+        var mountRequest = new SalsifyRequest("digital_assets/mounts", Method.Post, ApiVersion.Unversioned);
+        var mount = await Client.ExecuteWithErrorHandling<MountResponse>(mountRequest);
+
+        string fileName = replaceInput.Content.Name;
+        string contentType = replaceInput.Content.ContentType;
+        var uploadResponse = await UploadToMount(mount, fileBytes, fileName, contentType);
+        
+        var replaceRequest = new SalsifyRequest($"digital_assets/{asset.SystemId}", Method.Put, ApiVersion.Unversioned)
+            .WithJsonBody(new
+            {
+                data = new
+                {
+                    id = asset.SystemId,
+                    upload_response_attributes = uploadResponse
+                }
+            });
+
+        await Client.ExecuteWithErrorHandling(replaceRequest);
+    }
     
     private async Task<AssetEntity> AwaitCreatedAsset(string listFilter, HashSet<string> knownAssetIds)
     {
@@ -180,5 +203,27 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
         var request = new SalsifyRequest("digital_assets")
             .AddOrUpdateParameter(new QueryParameter("filter", filter));
         return Client.PaginateCursor<ListAssetsResponse, AssetEntity>(request);
+    }
+
+    private Task<AssetEntity> FetchAsset(string assetId)
+    {
+        var request = new SalsifyRequest($"digital_assets/{assetId}");
+        return Client.ExecuteWithErrorHandling<AssetEntity>(request);
+    }
+    
+    private Task<JObject> UploadToMount(MountResponse mount, byte[] fileBytes, string fileName, string contentType)
+    {
+        var request = new RestRequest(mount.Url, Method.Post)
+        {
+            AlwaysMultipartFormData = true,
+            MultipartFormQuoteParameters = true 
+        };
+
+        foreach (var (key, value) in mount.FormData)
+            request.AddParameter(key, value.ToString());
+
+        request.AddFile("file", fileBytes, fileName, contentType);
+
+        return ExternalClient.ExecuteWithErrorHandling<JObject>(request);
     }
 }
