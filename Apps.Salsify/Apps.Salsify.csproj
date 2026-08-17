@@ -15,6 +15,7 @@
         <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.1.0" />
         <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.1.0-rc.8709" />
         <PackageReference Include="Blackbird.Filters" Version="1.2.16" />
+        <PackageReference Include="ClosedXML" Version="0.105.1" />
     </ItemGroup>
 
     <ItemGroup>

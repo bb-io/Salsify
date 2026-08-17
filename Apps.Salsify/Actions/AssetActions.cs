@@ -1,6 +1,9 @@
+using System.Net.Mime;
 using Apps.Salsify.Api;
 using Apps.Salsify.Api.Utility;
+using Apps.Salsify.Converters.LookupTable;
 using Apps.Salsify.Extensions;
+using Apps.Salsify.Helpers.Asset;
 using Apps.Salsify.Helpers.Validation;
 using Apps.Salsify.Models.Entities.Asset;
 using Apps.Salsify.Models.Identifiers;
@@ -15,6 +18,7 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Utils.Extensions.Http;
+using Blackbird.Filters.Coders;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 
@@ -66,22 +70,11 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
     [Action("Download asset", Description = "Download a specific asset")]
     public async Task<FileResponse> DownloadAsset([ActionParameter] AssetIdentifier assetIdentifier)
     {
-        string assetId = assetIdentifier.AssetId;
+        var assetHelper = new AssetFileHelper(InvocationContext);
+        var downloadedAsset = await assetHelper.DownloadAsset(assetIdentifier.AssetId);
         
-        var request = new SalsifyRequest($"digital_assets/{assetId}");
-        var asset = await Client.ExecuteWithErrorHandling<AssetEntity>(request);
-
-        if (string.IsNullOrWhiteSpace(asset.Url))
-            throw new PluginMisconfigurationException($"Asset '{assetId}' does not have a download URL. Asset status - {asset.Status}");
-
-        var downloadClient = new RestClient();
-        var downloadRequest = new RestRequest(asset.Url);
-        var downloadResponse = await downloadClient.ExecuteAsync(downloadRequest);
-        if (!downloadResponse.IsSuccessful || downloadResponse.RawBytes is null or { Length: 0 })
-            throw new PluginApplicationException($"Failed to download asset '{assetId}' ({(int)downloadResponse.StatusCode})");
-        
-        await using var stream = new MemoryStream(downloadResponse.RawBytes);
-        var file = await fileManagementClient.UploadAsync(stream, downloadResponse.ContentType ?? "application/octet-stream", asset.Filename!);
+        await using var stream = new MemoryStream(downloadedAsset.Bytes);
+        var file = await fileManagementClient.UploadAsync(stream, downloadedAsset.ContentType, downloadedAsset.Filename);
         
         return new(file);
     }
@@ -179,6 +172,30 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
             });
 
         await Client.ExecuteWithErrorHandling(replaceRequest);
+    }
+
+    [Action("Download lookup table", Description = "Download lookup table file as HTML")]
+    public async Task<FileResponse> DownloadLookupTable(
+        [ActionParameter] LookupTableIdentifier tableIdentifier,
+        [ActionParameter] DownloadLookupTableRequest downloadInput)
+    {
+        downloadInput.Validate();
+        
+        var assetHelper = new AssetFileHelper(InvocationContext);
+        var downloadedAsset = await assetHelper.DownloadAsset(tableIdentifier.AssetId);
+
+        using var stream = new MemoryStream(downloadedAsset.Bytes);
+        var workbook = stream.ToWorkbook();
+        int firstRow = downloadInput.FirstRow ?? 2;
+        
+        var htmlDoc = LookupTableHtmlConverter.GenerateHtml(workbook, downloadInput.SheetName, downloadInput.ColumnLetters, firstRow);
+        
+        string fileName = $"{downloadedAsset.AssetName}_{downloadInput.SheetName}.html";
+        var coded = new HtmlCoder().Deserialize(htmlDoc.DocumentNode.OuterHtml, fileName);
+        coded.SystemReference.ContentId = tableIdentifier.AssetId;
+        
+        var outputFile = await fileManagementClient.UploadAsync(coded.ToStream(), MediaTypeNames.Text.Html, fileName);
+        return new(outputFile);
     }
     
     private async Task<AssetEntity> AwaitCreatedAsset(string listFilter, HashSet<string> knownAssetIds)

@@ -2,12 +2,13 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Filters.Bilingual.Xliff2;
 using Blackbird.Filters.Transformations;
+using ClosedXML.Excel;
 
 namespace Apps.Salsify.Extensions;
 
 public static class StreamExtensions
 {
-    public static async Task<Stream> ToHtml(this Stream fileStream, string fileName)
+    public static async Task<Stream> ToHtmlTransformationStream(this Stream fileStream, string fileName)
     {
         var bytes = await fileStream.GetByteData();
 
@@ -23,5 +24,17 @@ public static class StreamExtensions
             throw new PluginMisconfigurationException(target.Error);
 
         return target.Value.ToStream();
+    }
+    
+    public static XLWorkbook ToWorkbook(this Stream stream)
+    {
+        try
+        {
+            return new XLWorkbook(stream);
+        }
+        catch
+        {
+            throw new PluginMisconfigurationException("Asset could not be read as a spreadsheet. Only .xlsx files are supported");
+        }
     }
 }

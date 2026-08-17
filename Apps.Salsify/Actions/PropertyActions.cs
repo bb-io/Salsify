@@ -131,7 +131,7 @@ public class PropertyActions(InvocationContext invocationContext, IFileManagemen
         [ActionParameter] PicklistOptionalIdentifier picklistIdentifier)
     {
         await using var fileStream = await fileManagementClient.DownloadAsync(uploadInput.Content);
-        var htmlStream = await fileStream.ToHtml(uploadInput.Content.Name);
+        var htmlStream = await fileStream.ToHtmlTransformationStream(uploadInput.Content.Name);
         string html = htmlStream.ReadString();
         
         var coded = new HtmlCoder().Deserialize(html, uploadInput.Content.Name);

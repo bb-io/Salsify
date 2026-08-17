@@ -1,4 +1,5 @@
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Files;
 using Newtonsoft.Json;
 
 namespace Tests.Salsify.Base;
@@ -21,5 +22,11 @@ public class TestBaseMultipleConnections : TestBase
         TestContext.WriteLine($"Total: {items.Count()}");
         foreach (var item in items)
             TestContext?.WriteLine($"ID: {item.Value}, Display name: {item.DisplayName}");
+    }
+
+    protected void PrintFileResult(FileReference fileReference)
+    {
+        TestContext.WriteLine(fileReference.Name);
+        TestContext.WriteLine(fileReference.ContentType);
     }
 }
