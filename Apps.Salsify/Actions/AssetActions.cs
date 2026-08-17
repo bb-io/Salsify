@@ -106,14 +106,14 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
 
     // Follow the UI asset replacement flow to get all endpoints needed
     // For this, go to Assets -> any asset -> Actions -> Replace
-    [Action("Replace asset", Description = "Replace an existing asset with a file")]
-    public async Task ReplaceAsset(
+    [Action("Update asset", Description = "Replace an existing asset with a file")]
+    public async Task UpdateAsset(
         [ActionParameter] AssetIdentifier assetIdentifier,
-        [ActionParameter] ReplaceAssetRequest replaceInput)
+        [ActionParameter] UpdateAssetRequest updateInput)
     {
-        await using var fileStream = await fileManagementClient.DownloadAsync(replaceInput.Content);
+        await using var fileStream = await fileManagementClient.DownloadAsync(updateInput.Content);
         var fileBytes = await fileStream.GetByteData();
 
-        await _assetHelper.ReplaceAsset(fileBytes, assetIdentifier.AssetId, replaceInput.Content.Name, replaceInput.Content.ContentType);
+        await _assetHelper.ReplaceAsset(fileBytes, assetIdentifier.AssetId, updateInput.Content.Name, updateInput.Content.ContentType);
     }
 }

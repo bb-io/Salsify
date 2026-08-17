@@ -79,17 +79,17 @@ public class AssetActionTests : TestBaseMultipleConnections
     }
     
     [TestMethod, TargetConnections]
-    public async Task ReplaceAsset_IsSuccess(InvocationContext context)
+    public async Task UpdateAsset_IsSuccess(InvocationContext context)
     {
         // Arrange
         var actions = new AssetActions(context, FileManager);
         var assetIdentifier = new AssetIdentifier { AssetId = "525787423bdbfe2d6cf7eec6a24d018f56f7ce9d" };
-        var replaceInput = new ReplaceAssetRequest
+        var updateInput = new UpdateAssetRequest
         {
             Content = new FileReference { Name = "test.xlsx" },
         };
 
         // Act
-        await actions.ReplaceAsset(assetIdentifier, replaceInput);
+        await actions.UpdateAsset(assetIdentifier, updateInput);
     }
 }
