@@ -48,4 +48,19 @@ public class LookupTableActionTests : TestBaseMultipleConnections
         PrintResult(result);
         Assert.IsNotNull(result);
     }
+    
+    [TestMethod, TargetConnections]
+    public async Task UpdateLookupTable_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var actions = new LookupTableActions(context, FileManager);
+        var tableIdentifier = new LookupTableIdentifier { AssetId = "525787423bdbfe2d6cf7eec6a24d018f56f7ce9d" };
+        var input = new UpdateLookupTableRequest
+        {
+            Content = new FileReference { Name = "test.html" },
+        };
+
+        // Act
+        await actions.UpdateLookupTable(tableIdentifier, input);
+    }
 }

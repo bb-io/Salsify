@@ -85,6 +85,26 @@ public class AssetHelper(InvocationContext context) : SalsifyInvocable(context)
         var asset = await AwaitCreatedAsset(mount.Upload.List.Filter, knownAssetIds);
         return asset;
     }
+
+    public async Task ReplaceAsset(byte[] fileBytes, string assetId, string fileName, string contentType)
+    {
+        var mountRequest = new SalsifyRequest("digital_assets/mounts", Method.Post, ApiVersion.Unversioned);
+        var mount = await Client.ExecuteWithErrorHandling<MountResponse>(mountRequest);
+        
+        var uploadResponse = await UploadToMount(mount, fileBytes, fileName, contentType);
+        
+        var replaceRequest = new SalsifyRequest($"digital_assets/{assetId}", Method.Put, ApiVersion.Unversioned)
+            .WithJsonBody(new
+            {
+                data = new
+                {
+                    id = assetId,
+                    upload_response_attributes = uploadResponse
+                }
+            });
+
+        await Client.ExecuteWithErrorHandling(replaceRequest);
+    }
     
     private async Task<AssetEntity> AwaitCreatedAsset(string listFilter, HashSet<string> knownAssetIds)
     {

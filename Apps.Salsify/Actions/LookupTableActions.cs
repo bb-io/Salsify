@@ -19,6 +19,9 @@ namespace Apps.Salsify.Actions;
 [ActionList("Lookup tables")]
 public class LookupTableActions(InvocationContext context, IFileManagementClient fileManagementClient) : SalsifyInvocable(context)
 {
+    private readonly AssetHelper _assetHelper = new(context);
+    private readonly LookupTableHelper _lookupTableHelper = new(context);
+    
     [Action("Download lookup table", Description = "Download lookup table file as HTML")]
     public async Task<FileResponse> DownloadLookupTable(
         [ActionParameter] LookupTableIdentifier tableIdentifier,
@@ -26,8 +29,7 @@ public class LookupTableActions(InvocationContext context, IFileManagementClient
     {
         downloadInput.Validate();
         
-        var assetHelper = new AssetHelper(InvocationContext);
-        var downloadedAsset = await assetHelper.DownloadAsset(tableIdentifier.AssetId);
+        var downloadedAsset = await _assetHelper.DownloadAsset(tableIdentifier.AssetId);
 
         using var stream = new MemoryStream(downloadedAsset.Bytes);
         var workbook = stream.ToWorkbook();
@@ -49,12 +51,22 @@ public class LookupTableActions(InvocationContext context, IFileManagementClient
         await using var fileStream = await fileManagementClient.DownloadAsync(uploadInput.Content);
         string html = await fileStream.ToHtmlString(uploadInput.Content.Name);
 
-        var tableHelper = new LookupTableHelper(InvocationContext);
-        var table = await tableHelper.ApplyTranslation(html, uploadInput.Content.Name, uploadInput.SourceAssetId);
+        var table = await _lookupTableHelper.ApplyTranslation(html, uploadInput.Content.Name, uploadInput.SourceAssetId);
 
         string fileName = table.ResolveFileName(uploadInput.Name);
-        var assetHelper = new AssetHelper(InvocationContext);
-        var createdAsset = await assetHelper.UploadAsset(table.Bytes, fileName, SpreadsheetMediaTypes.Xlsx, uploadInput.ListName);
+        var createdAsset = await _assetHelper.UploadAsset(table.Bytes, fileName, SpreadsheetMediaTypes.Xlsx, uploadInput.ListName);
         return new(createdAsset);
+    }
+
+    [Action("Update lookup table", Description = "Replace an existing spreadsheet asset with a translated lookup table")]
+    public async Task UpdateLookupTable(
+        [ActionParameter] LookupTableIdentifier tableIdentifier,
+        [ActionParameter] UpdateLookupTableRequest updateInput)
+    {
+        await using var fileStream = await fileManagementClient.DownloadAsync(updateInput.Content);
+        string html = await fileStream.ToHtmlString(updateInput.Content.Name);
+
+        var table = await _lookupTableHelper.ApplyTranslation(html, updateInput.Content.Name, tableIdentifier.AssetId);
+        await _assetHelper.ReplaceAsset(table.Bytes, table.SourceAssetId, table.FileName, SpreadsheetMediaTypes.Xlsx);
     }
 }
