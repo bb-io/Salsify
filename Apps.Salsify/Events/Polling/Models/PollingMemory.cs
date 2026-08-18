@@ -1,4 +1,4 @@
-﻿namespace Apps.Salsify.Models.Polling;
+﻿namespace Apps.Salsify.Events.Polling.Models;
 
 public class PollingMemory
 {

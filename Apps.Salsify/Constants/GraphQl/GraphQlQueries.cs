@@ -10,7 +10,36 @@ public static class GraphQlQueries
             properties(query: $query, pagination: $pagination, orderBy: $orderBy,
                        dataType: $dataType, localizable: $localizable) {
               pageMetadata { totalEntries }
-              entries { id externalId name dataType localizable propertyGroup { externalId name } }
+              entries { 
+                id 
+                externalId
+                name 
+                dataType 
+                localizable 
+                propertyGroup 
+                { 
+                  externalId
+                  name 
+                }
+              }
+            }
+          }
+        }
+        """;
+    
+    public const string PropertyIndexPolling =
+        """
+        query PropertyIndexPolling($organizationId: ID!, $pagination: PaginationInput!, $localizable: PropertyLocalizable) {
+          organization(id: $organizationId) {
+            properties(pagination: $pagination, localizable: $localizable) {
+              pageMetadata { totalEntries hasNext }
+              entries {
+                externalId
+                name
+                localizable
+                createdAt
+                updatedAt
+              }
             }
           }
         }
