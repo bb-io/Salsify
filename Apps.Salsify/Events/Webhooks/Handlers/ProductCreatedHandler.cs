@@ -1,3 +1,4 @@
+using Apps.Salsify.Constants.Webhooks;
 using Apps.Salsify.Events.Webhooks.Handlers.Base;
 using Blackbird.Applications.Sdk.Common.Invocation;
 
@@ -5,6 +6,6 @@ namespace Apps.Salsify.Events.Webhooks.Handlers;
 
 public class ProductCreatedHandler(InvocationContext invocationContext) : BaseWebhookHandler(invocationContext)
 {
-    protected override string TriggerType => "add";
-    protected override string EntityType => "product";
+    protected override AlertTriggerType TriggerType => AlertTriggerType.Add;
+    protected override AlertEntityType EntityType => AlertEntityType.Product;
 }
