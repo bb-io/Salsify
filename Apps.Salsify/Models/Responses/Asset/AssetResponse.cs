@@ -8,9 +8,6 @@ public class AssetResponse(AssetEntity entity)
     [Display("Asset ID")]
     public string Id { get; set; } = entity.Id;
 
-    [Display("Asset URL")]
-    public string? Url { get; set; } = entity.Url;
-
     [Display("Asset name")]
     public string? Name { get; set; } = entity.Name;
 
