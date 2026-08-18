@@ -1,7 +1,7 @@
 using System.Net;
 using Blackbird.Applications.Sdk.Common.Webhooks;
 
-namespace Apps.Salsify.Helpers;
+namespace Apps.Salsify.Helpers.Event;
 
 public static class WebhookResult
 {

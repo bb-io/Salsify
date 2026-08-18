@@ -3,6 +3,7 @@ using Apps.Salsify.Events.Webhooks.Models.Payloads;
 using Apps.Salsify.Events.Webhooks.Models.Request.Asset;
 using Apps.Salsify.Extensions;
 using Apps.Salsify.Helpers;
+using Apps.Salsify.Helpers.Event;
 using Apps.Salsify.Models.Responses.Asset;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Webhooks;
