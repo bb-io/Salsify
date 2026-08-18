@@ -1,9 +1,8 @@
-using System.Net;
 using Apps.Salsify.Constants;
 using Apps.Salsify.Events.Webhooks.Handlers;
 using Apps.Salsify.Events.Webhooks.Models.Payloads;
 using Apps.Salsify.Extensions;
-using Apps.Salsify.Models.Responses;
+using Apps.Salsify.Helpers;
 using Apps.Salsify.Models.Responses.Product;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Webhooks;
@@ -21,12 +20,9 @@ public class ProductWebhookList(InvocationContext invocationContext) : SalsifyIn
         var current = await Client.GetCurrentOrgInfo();
         string productNameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName) ?? string.Empty;
 
-        var products = payload.Products.Select(x => new ProductResponse(x, productNameProperty)).ToArray();
-        return new WebhookResponse<SearchProductsResponse>
-        {
-            HttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK),
-            Result = new(products)
-        };
+        var products = payload.Products.Select(x => new ProductResponse(x, productNameProperty));
+        var result = new SearchProductsResponse(products.ToArray());
+        return await WebhookResult.Success(result);
     }
     
     [Webhook("On product created", typeof(ProductCreatedHandler), Description = "Triggered when a product is created")]
@@ -36,20 +32,9 @@ public class ProductWebhookList(InvocationContext invocationContext) : SalsifyIn
         
         var current = await Client.GetCurrentOrgInfo();
         string productNameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName) ?? string.Empty;
-
-        var products = payload.Products.Select(x => new ProductResponse(x, productNameProperty)).ToArray();
-        return new WebhookResponse<SearchProductsResponse>
-        {
-            HttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK),
-            Result = new(products)
-        };
+        
+        var products = payload.Products.Select(x => new ProductResponse(x, productNameProperty));
+        var result = new SearchProductsResponse(products.ToArray());
+        return await WebhookResult.Success(result);
     }
-
-    private static Task<WebhookResponse<ItemResponse>> Preflight() =>
-        Task.FromResult(new WebhookResponse<ItemResponse>
-        {
-            HttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK),
-            Result = null,
-            ReceivedWebhookRequestType = WebhookRequestType.Preflight
-        });
 }
