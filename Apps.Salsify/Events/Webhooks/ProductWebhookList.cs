@@ -2,7 +2,6 @@ using System.Net;
 using Apps.Salsify.Constants;
 using Apps.Salsify.Events.Webhooks.Handlers;
 using Apps.Salsify.Events.Webhooks.Models.Payloads;
-using Apps.Salsify.Models.Requests;
 using Apps.Salsify.Models.Responses;
 using Apps.Salsify.Models.Responses.Product;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -15,17 +14,12 @@ namespace Apps.Salsify.Events.Webhooks;
 public class ProductWebhookList(InvocationContext invocationContext) : SalsifyInvocable(invocationContext)
 {
     [Webhook("On product updated", typeof(ProductUpdatedHandler), Description = "Triggered when a product is updated")]
-    public async Task<WebhookResponse<SearchProductsResponse>> OnProductUpdated(WebhookRequest webhookRequest,
-        [WebhookParameter] ItemWebhookInput input)
+    public async Task<WebhookResponse<SearchProductsResponse>> OnProductUpdated(WebhookRequest webhookRequest)
     {
         var payload = JsonConvert.DeserializeObject<ProductWebhookPayload>(webhookRequest.Body.ToString()!);
         if (payload is null)
             throw new InvalidCastException(nameof(webhookRequest.Body));
-
-        // // Preflight: acknowledge the request (HTTP 200) but don't trigger the bird when it doesn't match the filter.
-        // if (input.ContentId is not null && input.ContentId != payload.Id)
-        //     return Preflight();
-
+        
         var current = await Client.GetCurrentOrgInfo();
         string productNameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName) ?? string.Empty;
 
