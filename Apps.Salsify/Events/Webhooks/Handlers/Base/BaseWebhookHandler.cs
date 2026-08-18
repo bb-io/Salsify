@@ -17,7 +17,7 @@ public abstract class BaseWebhookHandler(InvocationContext invocationContext) : 
     protected abstract string EntityType { get; }
     
     // Only works for the 'change' trigger type
-    protected virtual IEnumerable<string> Locales => [];
+    protected virtual IEnumerable<string?> Locales => [];
     
     public Task SubscribeAsync(IEnumerable<AuthenticationCredentialsProvider> creds, Dictionary<string, string> values)
     {
