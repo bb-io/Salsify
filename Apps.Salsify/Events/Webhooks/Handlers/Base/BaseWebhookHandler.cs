@@ -26,7 +26,7 @@ public abstract class BaseWebhookHandler(InvocationContext invocationContext) : 
         {
             data = new
             {
-                name = $"Blackbird-{EntityType}{EntityType}",
+                name = $"Blackbird-{EntityType}{TriggerType}",
                 entity_type = EntityType,
                 filter = "=",
                 trigger_type = TriggerType,
