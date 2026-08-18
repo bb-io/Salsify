@@ -27,6 +27,7 @@ public class ProductUpdatedHandler(InvocationContext invocationContext) : BaseIn
                 filter = "=",
                 trigger_type = TriggerType,
                 change_type = "any",
+                delivery_type = "webhook",
                 change_property_locale_selection = new
                 {
                     type = "any"
