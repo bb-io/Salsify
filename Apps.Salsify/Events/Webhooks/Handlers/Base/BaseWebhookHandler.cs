@@ -1,7 +1,7 @@
 using Apps.Salsify.Api;
 using Apps.Salsify.Api.Utility;
 using Apps.Salsify.Constants.Webhooks;
-using Apps.Salsify.Events.Webhooks.Models;
+using Apps.Salsify.Events.Webhooks.Models.Response.Api;
 using Apps.Salsify.Models.Entities.Alert;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
