@@ -2,7 +2,6 @@ using Apps.Salsify.Events.Webhooks.Handlers;
 using Apps.Salsify.Events.Webhooks.Models.Payloads;
 using Apps.Salsify.Events.Webhooks.Models.Request.Asset;
 using Apps.Salsify.Extensions;
-using Apps.Salsify.Helpers;
 using Apps.Salsify.Helpers.Event;
 using Apps.Salsify.Models.Responses.Asset;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -10,7 +9,7 @@ using Blackbird.Applications.Sdk.Common.Webhooks;
 
 namespace Apps.Salsify.Events.Webhooks;
 
-[WebhookList("Asset")]
+[WebhookList("Assets")]
 public class AssetWebhookList(InvocationContext invocationContext) : SalsifyInvocable(invocationContext)
 {
     [Webhook("On asset updated", typeof(AssetUpdatedHandler), Description = "Triggered when a digital asset is updated")]

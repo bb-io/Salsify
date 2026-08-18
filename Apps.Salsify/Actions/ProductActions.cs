@@ -40,6 +40,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
 
         var queryList = new List<string>();
         
+        // NEEDS TO BE REFACTORED into some kind of query builder
         if (searchInput.UpdatedAfter.HasValue)
             queryList.Add($"'salsify:updated_at':gte('{searchInput.UpdatedAfter.Value.ToSalsifyStringDate()}')");
         
