@@ -1,0 +1,10 @@
+{
+  "ConnectionDefinition": [
+      {
+        "ConnectionType": "API Token",
+        "ApiToken": "",
+        "OrgId": ""
+      }
+  ],
+  "TestFolder": "TestFiles"
+}
