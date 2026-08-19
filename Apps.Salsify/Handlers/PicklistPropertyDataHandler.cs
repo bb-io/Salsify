@@ -1,5 +1,4 @@
 using Apps.Salsify.Api;
-using Apps.Salsify.Constants;
 using Apps.Salsify.Constants.GraphQl;
 using Apps.Salsify.Models.Entities.Properties;
 using Apps.Salsify.Models.Responses.Property.Api;
@@ -27,7 +26,7 @@ public class PicklistPropertyDataHandler(InvocationContext invocationContext)
             dataType = new[] { "ENUMERATED" }
         });
         
-        var properties = await Client.PaginateGraphQl<ListPropertiesGraphQlResponse, PropertyGraphQlEntity>(request, paginateTimes: 1);
+        var properties = await GraphQlClient.Paginate<ListPropertiesGraphQlResponse, PropertyGraphQlEntity>(request, paginateTimes: 1);
         return properties.Select(x => new DataSourceItem(x.Id, x.Name));
     }
 }

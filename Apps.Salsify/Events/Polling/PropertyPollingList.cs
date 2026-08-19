@@ -30,7 +30,7 @@ public class PropertyPollingList(InvocationContext invocationContext) : SalsifyI
         {
             localizable = input.OnlyLocalizable is true ? "LOCALIZABLE" : "ALL"
         });
-        var properties = await Client.PaginateGraphQl<ListPollingPropertiesGraphQlResponse, PropertyPollingEntity>(request);
+        var properties = await GraphQlClient.Paginate<ListPollingPropertiesGraphQlResponse, PropertyPollingEntity>(request);
         
         var filtered = properties.Where(x => x.UpdatedAt > pollingRequest.Memory.LastPollingTime).ToList();
         var result = new OnPropertyCreatedOrUpdatedResponse(filtered.Select(x => new PropertyPollingResponse(x)).ToArray());

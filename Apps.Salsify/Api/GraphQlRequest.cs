@@ -6,7 +6,7 @@ namespace Apps.Salsify.Api;
 
 public class GraphQlRequest : RestRequest
 {
-    private const string Endpoint = "https://app.salsify.com/graphql";
+    private const string Endpoint = "graphql";
     public const string OrganizationVariable = "organizationId";
 
     public GraphQlRequest(string operationName, string query, object variables) : this(operationName, query, JObject.FromObject(variables)) { }

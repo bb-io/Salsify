@@ -1,9 +1,8 @@
+using Apps.Salsify.Api.Authenticators;
 using Apps.Salsify.Api.Utility;
-using Apps.Salsify.Authenticators;
 using Apps.Salsify.Constants;
 using Apps.Salsify.Models.Utility.Current;
 using Apps.Salsify.Models.Utility.Error;
-using Apps.Salsify.Models.Utility.GraphQl;
 using Apps.Salsify.Models.Utility.Pagination;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
@@ -84,30 +83,6 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
 
         return all;
     }
-    
-    public async Task<List<TItem>> PaginateGraphQl<TResponse, TItem>(GraphQlRequest request, int? paginateTimes = null)
-        where TResponse : IGraphQlPaged<TItem>
-    {
-        var all = new List<TItem>();
-
-        for (int page = 1; paginateTimes is null || page <= paginateTimes; page++)
-        {
-            var response = await ExecuteGraphQl<TResponse>(request.ForPage(page, 100));
-            var currentPage = response.Page;
-
-            if (currentPage.Entries.Count == 0) 
-                break;
-            all.AddRange(currentPage.Entries);
-
-            if (currentPage.PageMetadata.HasNext is false) 
-                break;
-            
-            if (currentPage.PageMetadata.HasNext is null && all.Count >= currentPage.PageMetadata.TotalEntries) 
-                break;
-        }
-
-        return all;
-    }
 
     public async Task<CurrentResponse> GetCurrentOrgInfo()
     {
@@ -117,30 +92,6 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         var request = new SalsifyRequest("current", Method.Get, ApiVersion.Unversioned);
         _current = await ExecuteWithErrorHandling<CurrentResponse>(request);
         return _current;
-    }
-    
-    public async Task<T> ExecuteGraphQl<T>(GraphQlRequest request)
-    {
-        if (request.DeclaresVariable(GraphQlRequest.OrganizationVariable))
-            request = request.WithVariable(GraphQlRequest.OrganizationVariable, creds.Get(CredsNames.OrgId).Value.Trim());
-        
-        var response = await ExecuteWithErrorHandling<GraphQlResponse<T>>(request);
-
-        if (response.Errors.Count > 0)
-            throw new PluginApplicationException(string.Join("; ", response.Errors.Select(x => x.Message)));
-
-        return response.Data ?? throw new PluginApplicationException("Salsify returned no data");
-    }
-    
-    public async Task ExecuteGraphQl(GraphQlRequest request)
-    {
-        if (request.DeclaresVariable(GraphQlRequest.OrganizationVariable))
-            request = request.WithVariable(GraphQlRequest.OrganizationVariable, creds.Get(CredsNames.OrgId).Value.Trim());
-        
-        var response = await ExecuteWithErrorHandling<GraphQlResponse<object>>(request);
-
-        if (response.Errors.Count > 0)
-            throw new PluginApplicationException(string.Join("; ", response.Errors.Select(x => x.Message)));
     }
     
     public override async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)
@@ -153,6 +104,23 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
     {
         PrepareRequest(request);
         return base.ExecuteWithErrorHandling(request);
+    }
+
+    protected override Exception ConfigureErrorException(RestResponse response)
+    {
+        string statusCodePart = $"Status code {response.StatusCode} ({(int)response.StatusCode}).";
+        if (string.IsNullOrWhiteSpace(response.Content))
+            return new PluginApplicationException($"{statusCodePart} Server returned no content");
+        
+        var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
+        string? singleError = error?.Error;
+        string? multipleErrors = string.Join("; ", error?.Errors ?? []);
+        
+        if (!string.IsNullOrWhiteSpace(singleError))
+            return new PluginApplicationException(singleError);
+        if (!string.IsNullOrWhiteSpace(multipleErrors))
+            return new PluginApplicationException(multipleErrors);
+        return new PluginApplicationException($"{statusCodePart} Could not deserialize error. Raw: {response.Content}");
     }
 
     private void PrepareRequest(RestRequest request)
@@ -173,22 +141,5 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
             request.AddOrUpdateHeader(MethodOverrideHandler.HeaderName, verb);
 
         salsify.Prepared = true;
-    }
-
-    protected override Exception ConfigureErrorException(RestResponse response)
-    {
-        string statusCodePart = $"Status code {response.StatusCode} ({(int)response.StatusCode}).";
-        if (string.IsNullOrWhiteSpace(response.Content))
-            return new PluginApplicationException($"{statusCodePart} Server returned no content");
-        
-        var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
-        string? singleError = error?.Error;
-        string? multipleErrors = string.Join("; ", error?.Errors ?? []);
-        
-        if (!string.IsNullOrWhiteSpace(singleError))
-            return new PluginApplicationException(singleError);
-        if (!string.IsNullOrWhiteSpace(multipleErrors))
-            return new PluginApplicationException(multipleErrors);
-        return new PluginApplicationException($"{statusCodePart} Could not deserialize error. Raw: {response.Content}");
     }
 }

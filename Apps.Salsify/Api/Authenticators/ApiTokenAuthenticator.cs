@@ -4,7 +4,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using RestSharp;
 using RestSharp.Authenticators;
 
-namespace Apps.Salsify.Authenticators;
+namespace Apps.Salsify.Api.Authenticators;
 
 public class ApiTokenAuthenticator(IEnumerable<AuthenticationCredentialsProvider> creds) : IAuthenticator
 {

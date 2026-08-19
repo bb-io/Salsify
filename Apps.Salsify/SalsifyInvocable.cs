@@ -14,10 +14,12 @@ public class SalsifyInvocable : BaseInvocable
 
     protected SalsifyClient Client { get; }
     protected ExternalRestClient ExternalClient { get; }
+    protected SalsifyGraphQlClient GraphQlClient { get; }
 
     protected SalsifyInvocable(InvocationContext invocationContext) : base(invocationContext)
     {
         Client = new(Creds);
         ExternalClient = new();
+        GraphQlClient = new(Creds);
     }
 }

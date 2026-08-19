@@ -195,10 +195,10 @@ public class PropertyActions(InvocationContext invocationContext, IFileManagemen
             contentLocaleIds = new[] { locale }
         });
 
-        return Client.ExecuteGraphQl(request);
+        return GraphQlClient.Execute(request);
     }
 
-    public Task<List<EnumeratedValueEntity>> GetPicklistValues(string picklistId, List<string> locales)
+    private Task<List<EnumeratedValueEntity>> GetPicklistValues(string picklistId, List<string> locales)
     {
         // To access this endpoint, go to Properties -> Any picklist property -> Values
         var request = new GraphQlRequest("EnumeratedValues", GraphQlQueries.EnumeratedValues, new
@@ -208,6 +208,6 @@ public class PropertyActions(InvocationContext invocationContext, IFileManagemen
             contentLocalesCodes = locales
         });
         
-        return Client.PaginateGraphQl<ListPropertyValuesResponse, EnumeratedValueEntity>(request);
+        return GraphQlClient.Paginate<ListPropertyValuesResponse, EnumeratedValueEntity>(request);
     }
 }
