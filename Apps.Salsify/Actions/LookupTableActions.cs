@@ -33,7 +33,7 @@ public class LookupTableActions(InvocationContext context, IFileManagementClient
         var downloadedAsset = await _assetHelper.DownloadAsset(tableIdentifier.AssetId);
 
         using var stream = new MemoryStream(downloadedAsset.Bytes);
-        var workbook = stream.ToWorkbook();
+        using var workbook = stream.ToWorkbook();
         int firstRow = downloadInput.FirstRow ?? 2;
         
         var htmlDoc = LookupTableHtmlConverter.GenerateHtml(workbook, sheetNameIdentifier.SheetName, downloadInput.ColumnLetters, firstRow);

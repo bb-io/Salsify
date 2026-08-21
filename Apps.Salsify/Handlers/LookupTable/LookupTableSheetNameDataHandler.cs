@@ -28,7 +28,7 @@ public class LookupTableSheetNameDataHandler : SalsifyInvocable, IAsyncDataSourc
         var downloadedAsset = await _assetHelper.DownloadAsset(_tableId);
 
         using var stream = new MemoryStream(downloadedAsset.Bytes);
-        var workbook = stream.ToWorkbook();
+        using var workbook = stream.ToWorkbook();
 
         var sheetNames = workbook.Worksheets.Select(x => x.Name);
         if (!string.IsNullOrEmpty(context.SearchString))
