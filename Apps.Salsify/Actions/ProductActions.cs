@@ -30,10 +30,10 @@ namespace Apps.Salsify.Actions;
 public class ProductActions(InvocationContext context, IFileManagementClient fileManagementClient) : SalsifyInvocable(context)
 {
     // https://developers.salsify.com/reference/bulk-read-products
-    [Action("Search products", Description = "Search products")]
+    [Action("Search products", Description = "Search for products using specific criteria. Fill in at least one advanced input field")]
     public async Task<SearchProductsResponse> SearchProducts([ActionParameter] SearchProductsRequest searchInput)
     {
-        searchInput.ValidateDates();
+        searchInput.Validate();
 
         var current = await Client.GetCurrentOrgInfo();
         string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);

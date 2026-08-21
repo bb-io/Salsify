@@ -54,7 +54,7 @@ Navigate to apps and search for Salsify. Click _Add connection_ and name your co
 
 ### Products
 
-- **Search products** Search products
+- **Search products** Search for products using specific criteria. Fill in at least one advanced input field
 - **Get product** Get details for a specific product
 - **Download product** Download product content
 - **Upload product** Upload product content from a file
