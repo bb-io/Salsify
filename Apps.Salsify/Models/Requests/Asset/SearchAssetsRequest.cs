@@ -5,9 +5,6 @@ namespace Apps.Salsify.Models.Requests.Asset;
 
 public class SearchAssetsRequest : IUpdatedDateRangeFilter
 {
-    [Display("Filter query", Description = "Without the '=' symbol at the beginning")]
-    public string? Query { get; set; }
-    
     [Display("Updated after")]
     public DateTime? UpdatedAfter { get; set; }
 

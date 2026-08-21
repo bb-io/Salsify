@@ -1,6 +1,7 @@
 using Apps.Salsify.Api;
 using Apps.Salsify.Constants;
 using Apps.Salsify.Extensions;
+using Apps.Salsify.Helpers.Query;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Responses.Product;
 using Apps.Salsify.Models.Responses.Product.Api;
@@ -15,10 +16,8 @@ public class ProductDataHandler(InvocationContext context) : SalsifyInvocable(co
     {
         var current = await Client.GetCurrentOrgInfo();
         string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
-
-        string? query = null;
-        if (!string.IsNullOrEmpty(context.SearchString))
-            query = $"='{nameProperty}':contains('{context.SearchString}')";
+        
+        string query = Filter.Build(Filter.Contains(nameProperty, context.SearchString));
         
         var request = new SalsifyRequest("products").AddQueryParameterIfNotEmpty("filter", query);
         var response = await Client.PaginateCursor<ListProductsResponse, ProductEntity>(request, paginateTimes: 2);
