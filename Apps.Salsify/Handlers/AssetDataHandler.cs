@@ -1,5 +1,6 @@
 using Apps.Salsify.Api;
 using Apps.Salsify.Extensions;
+using Apps.Salsify.Helpers.Query;
 using Apps.Salsify.Models.Entities.Asset;
 using Apps.Salsify.Models.Responses.Asset.Api;
 using Blackbird.Applications.Sdk.Common.Dynamic;
@@ -11,9 +12,7 @@ public class AssetDataHandler(InvocationContext context) : SalsifyInvocable(cont
 {
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken ct)
     {
-        string? query = null;
-        if (!string.IsNullOrEmpty(context.SearchString))
-            query = $"='salsify:name':contains('{context.SearchString}')";
+        string query = Filter.Build(Filter.Contains("salsify:name", context.SearchString));
         
         var request = new SalsifyRequest("digital_assets").AddQueryParameterIfNotEmpty("filter", query);
         var response = await Client.PaginateCursor<ListAssetsResponse, AssetEntity>(request, paginateTimes: 1);

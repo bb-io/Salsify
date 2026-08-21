@@ -2,9 +2,10 @@ using System.Net.Mime;
 using Apps.Salsify.Api;
 using Apps.Salsify.Constants;
 using Apps.Salsify.Converters.Product;
+using Apps.Salsify.Converters.Product.Models;
 using Apps.Salsify.Extensions;
 using Apps.Salsify.Helpers;
-using Apps.Salsify.Helpers.Validation;
+using Apps.Salsify.Helpers.Query;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Entities.Properties;
 using Apps.Salsify.Models.Identifiers;
@@ -30,32 +31,30 @@ namespace Apps.Salsify.Actions;
 public class ProductActions(InvocationContext context, IFileManagementClient fileManagementClient) : SalsifyInvocable(context)
 {
     // https://developers.salsify.com/reference/bulk-read-products
-    [Action("Search products", Description = "Search products")]
+    [Action("Search products", Description = "Search for products using specific criteria. Fill in at least one advanced input field")]
     public async Task<SearchProductsResponse> SearchProducts([ActionParameter] SearchProductsRequest searchInput)
     {
-        searchInput.ValidateDates();
+        searchInput.Validate();
 
         var current = await Client.GetCurrentOrgInfo();
         string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
+        
+        var filterProperties = searchInput.PropertyNames?.ToArray() ?? [];
+        var filterValues = searchInput.PropertyValues?.ToArray() ?? [];
 
-        var queryList = new List<string>();
+        Filter?[] queryList =
+        [
+            Filter.GreaterOrEqual("salsify:updated_at", searchInput.UpdatedAfter),
+            Filter.LessOrEqual("salsify:updated_at", searchInput.UpdatedBefore),
+            Filter.Contains(nameProperty, searchInput.NameContains),
+            Filter.InList(searchInput.ListId),
+            Filter.Raw(searchInput.CustomQuery),
+            ..filterProperties.Zip(filterValues, Filter.EqualTo)
+        ];
+        if (queryList.All(x => x is null))
+            throw new PluginMisconfigurationException("Please fill at least one advanced input field first");
         
-        // NEEDS TO BE REFACTORED into some kind of query builder
-        if (searchInput.UpdatedAfter.HasValue)
-            queryList.Add($"'salsify:updated_at':gte('{searchInput.UpdatedAfter.Value.ToSalsifyStringDate()}')");
-        
-        if (searchInput.UpdatedBefore.HasValue)
-            queryList.Add($"'salsify:updated_at':lte('{searchInput.UpdatedBefore.Value.ToSalsifyStringDate()}')");
-        
-        if (!string.IsNullOrEmpty(searchInput.NameContains))
-            queryList.Add($"'{nameProperty}':contains('{searchInput.NameContains}')");
-        
-        if (!string.IsNullOrEmpty(searchInput.Query))
-            queryList.Add(searchInput.Query.TrimStart('='));
-
-        string? query = null;
-        if (queryList.Count != 0)
-            query = "=" + string.Join(',', queryList);
+        string query = Filter.Build(queryList);
         
         var productsRequest = new SalsifyRequest("products").AddQueryParameterIfNotEmpty("filter", query);
         var productsResponse = await Client.PaginateCursor<ListProductsResponse, ProductEntity>(productsRequest);
@@ -91,13 +90,16 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
         
         var propertyKeys = product.Values.Select(x => x.Key);
         var propertyDefinitions = await PropertyHelper.GetDefinitions(Client, propertyKeys);
-        
-        var doc = ProductHtmlConverter.GenerateHtml(
-            product, 
-            propertyDefinitions,
-            locale, 
-            includeNonLocalizable: downloadInput.OnlyLocalizableProperties is false, 
-            downloadInput.ExcludeProperties);
+
+        var htmlOptions = new ProductHtmlOptions
+        {
+            Locale = locale,
+            DefaultLocale = current.DefaultLocaleId,
+            ExcludeProperties = downloadInput.ExcludeProperties ?? [],
+            IncludeProperties = downloadInput.IncludeProperties ?? [],
+            IncludeNonLocalizable = downloadInput.OnlyLocalizableProperties is false
+        };
+        var doc = ProductHtmlConverter.GenerateHtml(product, propertyDefinitions, htmlOptions);
         
         string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
         string? productName = nameProperty is null ? null : product.GetValue(nameProperty);

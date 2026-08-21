@@ -25,6 +25,7 @@ public class LookupTableActions(InvocationContext context, IFileManagementClient
     [Action("Download lookup table", Description = "Download lookup table file as HTML")]
     public async Task<FileResponse> DownloadLookupTable(
         [ActionParameter] LookupTableIdentifier tableIdentifier,
+        [ActionParameter] LookupTableSheetNameIdentifier sheetNameIdentifier,
         [ActionParameter] DownloadLookupTableRequest downloadInput)
     {
         downloadInput.Validate();
@@ -32,12 +33,12 @@ public class LookupTableActions(InvocationContext context, IFileManagementClient
         var downloadedAsset = await _assetHelper.DownloadAsset(tableIdentifier.AssetId);
 
         using var stream = new MemoryStream(downloadedAsset.Bytes);
-        var workbook = stream.ToWorkbook();
+        using var workbook = stream.ToWorkbook();
         int firstRow = downloadInput.FirstRow ?? 2;
         
-        var htmlDoc = LookupTableHtmlConverter.GenerateHtml(workbook, downloadInput.SheetName, downloadInput.ColumnLetters, firstRow);
+        var htmlDoc = LookupTableHtmlConverter.GenerateHtml(workbook, sheetNameIdentifier.SheetName, downloadInput.ColumnLetters, firstRow);
         
-        string fileName = $"{downloadedAsset.AssetName}_{downloadInput.SheetName}.html";
+        string fileName = $"{downloadedAsset.AssetName}_{sheetNameIdentifier.SheetName}.html";
         var coded = new HtmlCoder().Deserialize(htmlDoc.DocumentNode.OuterHtml, fileName);
         coded.SystemReference.ContentId = tableIdentifier.AssetId;
         

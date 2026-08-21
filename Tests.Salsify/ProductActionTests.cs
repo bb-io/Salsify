@@ -19,9 +19,12 @@ public class ProductActionTests : TestBaseMultipleConnections
         var actions = new ProductActions(context, FileManager);
         var input = new SearchProductsRequest
         {
-            UpdatedAfter = DateTime.UtcNow - TimeSpan.FromDays(2),
-            UpdatedBefore = DateTime.UtcNow + TimeSpan.FromHours(1),
-            NameContains = "test"
+            //UpdatedAfter = DateTime.UtcNow - TimeSpan.FromDays(2),
+            //UpdatedBefore = DateTime.UtcNow + TimeSpan.FromHours(1),
+            //ListId = "1237442",
+            //PropertyNames =  ["Material_LOC"],
+            //PropertyValues = ["ABS"],
+            CustomQuery = "'Part Code (ID)':'partcodeid'"
         };
 
         // Act
@@ -53,10 +56,10 @@ public class ProductActionTests : TestBaseMultipleConnections
         // Arrange
         var actions = new ProductActions(context, FileManager);
         var identifier = new ProductIdentifier { ProductId = "partcodeid" };
-        var localeIdentifier = new LocaleOptionalIdentifier { Locale = "en-US" };
+        var localeIdentifier = new LocaleOptionalIdentifier { Locale = "fr-CA" };
         var downloadInput = new DownloadProductRequest
         {
-            OnlyLocalizableProperties = false,
+            OnlyLocalizableProperties = true,
         };
 
         // Act

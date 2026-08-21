@@ -38,6 +38,19 @@ Navigate to apps and search for Salsify. Click _Add connection_ and name your co
 
 ## Actions
 
+> **Note**: Some actions have a 'Custom query' input - it is possible to use Salsify's query language to apply your custom filters. 
+> Please refer to [this link](https://developers.salsify.com/reference/salsify-filtering-language-syntax)
+> to understand how the language works and how to build your own queries.
+>
+> Your query is combined with the action's other filter inputs using the `AND` operator.
+> 
+> Make sure to input queries without the '=' character at the beginning - the app already does it for you.
+> For example, enter `'Brand':'Test'` rather than `='Brand':'Test'`.
+> 
+> Salsify also does not report a mistyped property name as an error. 
+> A query referencing a property that does not exist simply returns no results. 
+> If a search always comes back empty, check the property names in your query.
+
 ### Assets
 
 - **Search assets** Search assets
@@ -54,7 +67,7 @@ Navigate to apps and search for Salsify. Click _Add connection_ and name your co
 
 ### Products
 
-- **Search products** Search products
+- **Search products** Search for products using specific criteria. Fill in at least one advanced input field
 - **Get product** Get details for a specific product
 - **Download product** Download product content
 - **Upload product** Upload product content from a file
