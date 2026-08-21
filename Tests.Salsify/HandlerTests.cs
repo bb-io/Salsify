@@ -1,4 +1,5 @@
 ﻿using Apps.Salsify.Handlers;
+using Apps.Salsify.Handlers.List;
 using Apps.Salsify.Handlers.LookupTable;
 using Apps.Salsify.Models.Identifiers;
 using Blackbird.Applications.Sdk.Common.Dynamic;
@@ -85,6 +86,20 @@ public class HandlerTests : TestBaseMultipleConnections
     {
         // Arrange
         var handler = new AssetListNameDataHandler(context);
+    
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext { SearchString = "" }, CancellationToken.None);
+    
+        // Assert
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
+    
+    [TestMethod, TargetConnections]
+    public async Task AssetListIdDataHandler_ReturnsAssets(InvocationContext context)
+    {
+        // Arrange
+        var handler = new AssetListIdDataHandler(context);
     
         // Act
         var result = await handler.GetDataAsync(new DataSourceContext { SearchString = "" }, CancellationToken.None);

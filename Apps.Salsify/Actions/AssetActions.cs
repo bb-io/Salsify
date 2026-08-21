@@ -34,6 +34,7 @@ public class AssetActions(InvocationContext context, IFileManagementClient fileM
             Filter.GreaterOrEqual("salsify:updated_at", searchInput.UpdatedAfter),
             Filter.LessOrEqual("salsify:updated_at", searchInput.UpdatedBefore),
             Filter.Contains("salsify:name", searchInput.NameContains),
+            Filter.InList(searchInput.ListId),
             Filter.Raw(searchInput.CustomQuery),
         ];
         string query = Filter.Build(queryList);

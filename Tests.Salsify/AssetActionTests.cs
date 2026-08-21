@@ -17,7 +17,8 @@ public class AssetActionTests : TestBaseMultipleConnections
         var actions = new AssetActions(context, FileManager);
         var searchInput = new SearchAssetsRequest
         {
-            NameContains = ".xlsx"
+            NameContains = ".xlsx",
+            ListId = "1226073"
         };
 
         // Act
