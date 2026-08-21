@@ -105,4 +105,18 @@ public class HandlerTests : TestBaseMultipleConnections
         PrintDataHandlerResult(result);
         Assert.IsNotNull(result);
     }
+    
+    [TestMethod, TargetConnections]
+    public async Task ProductListIdDataHandler_ReturnsListIds(InvocationContext context)
+    {
+        // Arrange
+        var handler = new ProductListIdDataHandler(context);
+    
+        // Act
+        var result = await handler.GetDataAsync(new DataSourceContext { SearchString = "Delete" }, CancellationToken.None);
+    
+        // Assert
+        PrintDataHandlerResult(result);
+        Assert.IsNotNull(result);
+    }
 }

@@ -9,16 +9,15 @@ using RestSharp;
 
 namespace Apps.Salsify.Handlers;
 
-public class AssetListNameDataHandler(InvocationContext context) : SalsifyInvocable(context), IAsyncDataSourceItemHandler
+public class ProductListIdDataHandler(InvocationContext context) : SalsifyInvocable(context), IAsyncDataSourceItemHandler
 {
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken ct)
     {
         var request = new SalsifyRequest("lists", Method.Get, ApiVersion.Unversioned)
-            .AddQueryParameter("entity_type", "digital_asset")
-            .AddQueryParameter("type", "simple")
+            .AddQueryParameter("entity_type", "product")
             .AddQueryParameterIfNotEmpty("query", context.SearchString);
 
         var response = await Client.PaginateOffset<ListListsResponse, ListEntity>(request, paginateTimes: 2);
-        return response.Select(x => new DataSourceItem(x.Name, x.Name)).ToList();
+        return response.Select(x => new DataSourceItem(x.Id, x.Name)).ToList();
     }
 }
