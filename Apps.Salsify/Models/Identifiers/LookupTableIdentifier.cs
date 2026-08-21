@@ -1,4 +1,4 @@
-using Apps.Salsify.Handlers;
+using Apps.Salsify.Handlers.LookupTable;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 

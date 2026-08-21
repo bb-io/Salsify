@@ -6,7 +6,7 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
 
-namespace Apps.Salsify.Handlers;
+namespace Apps.Salsify.Handlers.LookupTable;
 
 public class LookupTableDataHandler(InvocationContext context) : SalsifyInvocable(context), IAsyncDataSourceItemHandler
 {
