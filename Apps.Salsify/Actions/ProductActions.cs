@@ -2,6 +2,7 @@ using System.Net.Mime;
 using Apps.Salsify.Api;
 using Apps.Salsify.Constants;
 using Apps.Salsify.Converters.Product;
+using Apps.Salsify.Converters.Product.Models;
 using Apps.Salsify.Extensions;
 using Apps.Salsify.Helpers;
 using Apps.Salsify.Models.Entities.Product;
@@ -84,22 +85,22 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     {
         var current = await Client.GetCurrentOrgInfo();
         string locale = current.ResolveLocale(identifier.Locale);
-        string defaultLocale = current.DefaultLocaleId;
 
         var getProductRequest = new SalsifyRequest($"products/{productIdentifier.ProductId}");
         var product = await Client.ExecuteWithErrorHandling<ProductEntity>(getProductRequest);
         
         var propertyKeys = product.Values.Select(x => x.Key);
         var propertyDefinitions = await PropertyHelper.GetDefinitions(Client, propertyKeys);
-        
-        var doc = ProductHtmlConverter.GenerateHtml(
-            product, 
-            propertyDefinitions,
-            locale, 
-            defaultLocale,
-            includeNonLocalizable: downloadInput.OnlyLocalizableProperties is false, 
-            downloadInput.ExcludeProperties ?? [],
-            downloadInput.IncludeProperties ?? []);
+
+        var htmlOptions = new ProductHtmlOptions
+        {
+            Locale = locale,
+            DefaultLocale = current.DefaultLocaleId,
+            ExcludeProperties = downloadInput.ExcludeProperties ?? [],
+            IncludeProperties = downloadInput.IncludeProperties ?? [],
+            IncludeNonLocalizable = downloadInput.OnlyLocalizableProperties is false
+        };
+        var doc = ProductHtmlConverter.GenerateHtml(product, propertyDefinitions, htmlOptions);
         
         string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
         string? productName = nameProperty is null ? null : product.GetValue(nameProperty);

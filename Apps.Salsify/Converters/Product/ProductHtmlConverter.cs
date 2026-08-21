@@ -1,5 +1,6 @@
 using System.Net;
 using Apps.Salsify.Constants;
+using Apps.Salsify.Converters.Product.Models;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Entities.Properties;
 using Blackbird.Applications.Sdk.Common.Exceptions;
@@ -12,14 +13,10 @@ public static class ProductHtmlConverter
     public static HtmlDocument GenerateHtml(
         ProductEntity product,
         IReadOnlyDictionary<string, PropertyEntity> definitions,
-        string locale,
-        string defaultLocale,
-        bool includeNonLocalizable,
-        List<string> excludePropertyIds,
-        List<string> onlyIncludePropertyIds)
+        ProductHtmlOptions options)
     {
-        var excluded = new HashSet<string>(excludePropertyIds, StringComparer.Ordinal);
-        var onlyIncluded = new HashSet<string>(onlyIncludePropertyIds, StringComparer.Ordinal);
+        var excluded = new HashSet<string>(options.ExcludeProperties, StringComparer.Ordinal);
+        var onlyIncluded = new HashSet<string>(options.IncludeProperties, StringComparer.Ordinal);
 
         var doc = new HtmlDocument();
         doc.LoadHtml("<html><head><meta charset=\"utf-8\"></head><body></body></html>");
@@ -33,10 +30,10 @@ public static class ProductHtmlConverter
             if (onlyIncluded.Count != 0 && !onlyIncluded.Contains(propertyId))
                 continue;
             
-            if (excluded.Contains(propertyId) || !PropertyIsEligible(definition, includeNonLocalizable))
+            if (excluded.Contains(propertyId) || !PropertyIsEligible(definition, options.IncludeNonLocalizable))
                 continue;
 
-            string lookupKey = definition!.Localizable ? locale : string.Empty;
+            string lookupKey = definition!.Localizable ? options.Locale : string.Empty;
             var localizedValues = product.GetLocalizedValues(propertyId);
 
             if (!localizedValues.TryGetValue(lookupKey, out var values) || values.Count == 0)
@@ -44,7 +41,7 @@ public static class ProductHtmlConverter
                 if (!definition.Localizable) 
                     continue;
 
-                if (!localizedValues.TryGetValue(defaultLocale, out values) || values.Count == 0) 
+                if (!localizedValues.TryGetValue(options.DefaultLocale, out values) || values.Count == 0) 
                     continue;
             }
 
@@ -58,11 +55,11 @@ public static class ProductHtmlConverter
         if (emitted > 0) 
             return doc;
 
-        string filterHint = excludePropertyIds.Count != 0 || onlyIncludePropertyIds.Count != 0
+        string filterHint = options.ExcludeProperties.Count != 0 || options.IncludeProperties.Count != 0
             ? "Check the 'Include properties' and 'Exclude properties' inputs"
             : string.Empty;
 
-        throw new PluginMisconfigurationException($"Product '{product.Id}' has no translatable content for {locale}. {filterHint}");
+        throw new PluginMisconfigurationException($"Product '{product.Id}' has no translatable content for {options.Locale}. {filterHint}");
     }
 
     private static bool PropertyIsEligible(PropertyEntity? definition, bool includeNonLocalizable)
