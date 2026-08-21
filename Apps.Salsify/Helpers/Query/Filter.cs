@@ -36,6 +36,13 @@ public sealed record Filter
             : new($"'{field}':lte('{value!.Value.ToSalsifyStringDate()}')");
     }
 
+    public static Filter? Raw(string? rawQuery)
+    {
+        return string.IsNullOrWhiteSpace(rawQuery) 
+            ? null 
+            : new(rawQuery.TrimStart('='));
+    }
+
     public static Filter? InList(string? listId)
     {
         return string.IsNullOrWhiteSpace(listId) 

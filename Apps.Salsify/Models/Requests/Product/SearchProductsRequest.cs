@@ -9,6 +9,9 @@ namespace Apps.Salsify.Models.Requests.Product;
 
 public class SearchProductsRequest : IUpdatedDateRangeFilter
 {
+    [Display("Custom query", Description = "Without the '=' symbol at the beginning")]
+    public string? CustomQuery { get; set; }
+    
     [Display("Updated after")]
     public DateTime? UpdatedAfter { get; set; }
 

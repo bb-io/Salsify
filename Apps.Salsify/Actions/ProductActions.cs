@@ -48,6 +48,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
             Filter.LessOrEqual("salsify:updated_at", searchInput.UpdatedBefore),
             Filter.Contains(nameProperty, searchInput.NameContains),
             Filter.InList(searchInput.ListId),
+            Filter.Raw(searchInput.CustomQuery),
             ..filterProperties.Zip(filterValues, Filter.EqualTo)
         ];
         if (queryList.All(x => x is null))
