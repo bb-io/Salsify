@@ -35,7 +35,9 @@ public class SearchProductsRequest : IUpdatedDateRangeFilter
     {
         this.ValidateDates();
 
-        if (PropertyNames is not null && PropertyValues is not null && PropertyNames.Count != PropertyValues.Count)
-            throw new PluginMisconfigurationException("Property inputs should have the same lenght");
+        var propertyNames = PropertyNames ?? [];
+        var propertyValues = PropertyValues ?? [];
+        if (propertyNames.Count != propertyValues.Count)
+            throw new PluginMisconfigurationException("Property inputs should have the same length");
     }
 }
