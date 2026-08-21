@@ -98,7 +98,8 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
             locale, 
             defaultLocale,
             includeNonLocalizable: downloadInput.OnlyLocalizableProperties is false, 
-            downloadInput.ExcludeProperties);
+            downloadInput.ExcludeProperties ?? [],
+            downloadInput.IncludeProperties ?? []);
         
         string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
         string? productName = nameProperty is null ? null : product.GetValue(nameProperty);

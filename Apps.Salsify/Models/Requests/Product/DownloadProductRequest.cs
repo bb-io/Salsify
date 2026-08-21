@@ -11,4 +11,8 @@ public class DownloadProductRequest
 
     [Display("Exclude properties"), DataSource(typeof(PropertyDataHandler))]
     public List<string>? ExcludeProperties { get; set; }
+    
+    [Display("Include properties", Description = "Only include properties specified in this input")] 
+    [DataSource(typeof(PropertyDataHandler))]
+    public List<string>? IncludeProperties { get; set; }
 }

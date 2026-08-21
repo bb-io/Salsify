@@ -14,10 +14,12 @@ public static class ProductHtmlConverter
         IReadOnlyDictionary<string, PropertyEntity> definitions,
         string locale,
         string defaultLocale,
-        bool includeNonLocalizable = false,
-        IReadOnlyCollection<string>? excludeProperties = null)
+        bool includeNonLocalizable,
+        List<string> excludePropertyIds,
+        List<string> onlyIncludePropertyIds)
     {
-        var excluded = new HashSet<string>(excludeProperties ?? [], StringComparer.Ordinal);
+        var excluded = new HashSet<string>(excludePropertyIds, StringComparer.Ordinal);
+        var onlyIncluded = new HashSet<string>(onlyIncludePropertyIds, StringComparer.Ordinal);
 
         var doc = new HtmlDocument();
         doc.LoadHtml("<html><head><meta charset=\"utf-8\"></head><body></body></html>");
@@ -27,6 +29,10 @@ public static class ProductHtmlConverter
         foreach (var (propertyId, _) in product.Values)
         {
             var definition = definitions.GetValueOrDefault(propertyId);
+            
+            if (onlyIncluded.Count != 0 && !onlyIncluded.Contains(propertyId))
+                continue;
+            
             if (excluded.Contains(propertyId) || !PropertyIsEligible(definition, includeNonLocalizable))
                 continue;
 
@@ -49,9 +55,14 @@ public static class ProductHtmlConverter
             }
         }
 
-        return emitted == 0 
-            ? throw new PluginMisconfigurationException($"Product '{product.Id}' has no translatable content for {locale}") 
-            : doc;
+        if (emitted > 0) 
+            return doc;
+
+        string filterHint = excludePropertyIds.Count != 0 || onlyIncludePropertyIds.Count != 0
+            ? "Check the 'Include properties' and 'Exclude properties' inputs"
+            : string.Empty;
+
+        throw new PluginMisconfigurationException($"Product '{product.Id}' has no translatable content for {locale}. {filterHint}");
     }
 
     private static bool PropertyIsEligible(PropertyEntity? definition, bool includeNonLocalizable)
