@@ -19,9 +19,10 @@ public class ProductActionTests : TestBaseMultipleConnections
         var actions = new ProductActions(context, FileManager);
         var input = new SearchProductsRequest
         {
-            UpdatedAfter = DateTime.UtcNow - TimeSpan.FromDays(2),
-            UpdatedBefore = DateTime.UtcNow + TimeSpan.FromHours(1),
-            NameContains = "test"
+            //UpdatedAfter = DateTime.UtcNow - TimeSpan.FromDays(2),
+            //UpdatedBefore = DateTime.UtcNow + TimeSpan.FromHours(1),
+            NameContains = "Metro",
+            ListId = "1237442"
         };
 
         // Act

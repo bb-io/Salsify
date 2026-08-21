@@ -5,6 +5,8 @@ using Apps.Salsify.Converters.Product;
 using Apps.Salsify.Converters.Product.Models;
 using Apps.Salsify.Extensions;
 using Apps.Salsify.Helpers;
+using Apps.Salsify.Helpers.Query;
+using Apps.Salsify.Helpers.Validation;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Entities.Properties;
 using Apps.Salsify.Models.Identifiers;
@@ -33,29 +35,23 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     [Action("Search products", Description = "Search for products using specific criteria. Fill in at least one advanced input field")]
     public async Task<SearchProductsResponse> SearchProducts([ActionParameter] SearchProductsRequest searchInput)
     {
-        searchInput.Validate();
+        searchInput.ValidateDates();
 
         var current = await Client.GetCurrentOrgInfo();
         string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
 
-        var queryList = new List<string>();
+        var queryList = new[]
+        {
+            Filter.GreaterOrEqual("salsify:updated_at", searchInput.UpdatedAfter),
+            Filter.LessOrEqual("salsify:updated_at", searchInput.UpdatedBefore),
+            Filter.Contains(nameProperty, searchInput.NameContains),
+            Filter.InList(searchInput.ListId)
+        };
         
-        // NEEDS TO BE REFACTORED into some kind of query builder
-        if (searchInput.UpdatedAfter.HasValue)
-            queryList.Add($"'salsify:updated_at':gte('{searchInput.UpdatedAfter.Value.ToSalsifyStringDate()}')");
+        if (queryList.All(x => x is null))
+            throw new PluginMisconfigurationException("Please fill at least one advanced input field first");
         
-        if (searchInput.UpdatedBefore.HasValue)
-            queryList.Add($"'salsify:updated_at':lte('{searchInput.UpdatedBefore.Value.ToSalsifyStringDate()}')");
-        
-        if (!string.IsNullOrEmpty(searchInput.NameContains))
-            queryList.Add($"'{nameProperty}':contains('{searchInput.NameContains}')");
-        
-        if (!string.IsNullOrEmpty(searchInput.Query))
-            queryList.Add(searchInput.Query.TrimStart('='));
-
-        string? query = null;
-        if (queryList.Count != 0)
-            query = "=" + string.Join(',', queryList);
+        string query = Filter.Build(queryList);
         
         var productsRequest = new SalsifyRequest("products").AddQueryParameterIfNotEmpty("filter", query);
         var productsResponse = await Client.PaginateCursor<ListProductsResponse, ProductEntity>(productsRequest);
