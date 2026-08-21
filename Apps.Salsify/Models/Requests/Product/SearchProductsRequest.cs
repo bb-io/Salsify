@@ -1,4 +1,5 @@
 using Apps.Salsify.Handlers;
+using Apps.Salsify.Handlers.List;
 using Apps.Salsify.Helpers.Validation;
 using Apps.Salsify.Helpers.Validation.Models;
 using Blackbird.Applications.Sdk.Common;
