@@ -8,7 +8,7 @@ using RestSharp;
 
 namespace Apps.Salsify.Handlers;
 
-public class TableAssetDataHandler(InvocationContext context) : SalsifyInvocable(context), IAsyncDataSourceItemHandler
+public class LookupTableDataHandler(InvocationContext context) : SalsifyInvocable(context), IAsyncDataSourceItemHandler
 {
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken ct)
     {

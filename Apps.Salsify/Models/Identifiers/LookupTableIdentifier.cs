@@ -6,6 +6,6 @@ namespace Apps.Salsify.Models.Identifiers;
 
 public class LookupTableIdentifier
 {
-    [Display("Table asset ID"), DataSource(typeof(TableAssetDataHandler))]
+    [Display("Table asset ID"), DataSource(typeof(LookupTableDataHandler))]
     public string AssetId { get; set; } = string.Empty;
 }
