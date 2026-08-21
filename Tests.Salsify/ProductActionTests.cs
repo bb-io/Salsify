@@ -21,8 +21,9 @@ public class ProductActionTests : TestBaseMultipleConnections
         {
             //UpdatedAfter = DateTime.UtcNow - TimeSpan.FromDays(2),
             //UpdatedBefore = DateTime.UtcNow + TimeSpan.FromHours(1),
-            NameContains = "Metro",
-            ListId = "1237442"
+            ListId = "1237442",
+            PropertyNames =  ["Material_LOC"],
+            PropertyValues = ["ABS"]
         };
 
         // Act

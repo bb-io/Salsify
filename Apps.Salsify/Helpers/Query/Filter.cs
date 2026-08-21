@@ -8,6 +8,13 @@ public sealed record Filter
     
     private Filter(string clause) => Clause = clause;
 
+    public static Filter? EqualTo(string? field, string? value)
+    {
+        return IsIncomplete(field, value) 
+            ? null 
+            : new($"'{field}':'{value}'");
+    }
+    
     public static Filter? Contains(string? field, string? value)
     {
         return IsIncomplete(field, value) 

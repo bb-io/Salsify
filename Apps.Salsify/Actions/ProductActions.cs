@@ -6,7 +6,6 @@ using Apps.Salsify.Converters.Product.Models;
 using Apps.Salsify.Extensions;
 using Apps.Salsify.Helpers;
 using Apps.Salsify.Helpers.Query;
-using Apps.Salsify.Helpers.Validation;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Entities.Properties;
 using Apps.Salsify.Models.Identifiers;
@@ -35,19 +34,22 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     [Action("Search products", Description = "Search for products using specific criteria. Fill in at least one advanced input field")]
     public async Task<SearchProductsResponse> SearchProducts([ActionParameter] SearchProductsRequest searchInput)
     {
-        searchInput.ValidateDates();
+        searchInput.Validate();
 
         var current = await Client.GetCurrentOrgInfo();
         string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
+        
+        var filterProperties = searchInput.PropertyNames?.ToArray() ?? [];
+        var filterValues = searchInput.PropertyValues?.ToArray() ?? [];
 
-        var queryList = new[]
-        {
+        Filter?[] queryList =
+        [
             Filter.GreaterOrEqual("salsify:updated_at", searchInput.UpdatedAfter),
             Filter.LessOrEqual("salsify:updated_at", searchInput.UpdatedBefore),
             Filter.Contains(nameProperty, searchInput.NameContains),
-            Filter.InList(searchInput.ListId)
-        };
-        
+            Filter.InList(searchInput.ListId),
+            ..filterProperties.Zip(filterValues, Filter.EqualTo)
+        ];
         if (queryList.All(x => x is null))
             throw new PluginMisconfigurationException("Please fill at least one advanced input field first");
         
