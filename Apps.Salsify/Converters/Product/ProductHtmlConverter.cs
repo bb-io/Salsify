@@ -13,6 +13,7 @@ public static class ProductHtmlConverter
         ProductEntity product,
         IReadOnlyDictionary<string, PropertyEntity> definitions,
         string locale,
+        string defaultLocale,
         bool includeNonLocalizable = false,
         IReadOnlyCollection<string>? excludeProperties = null)
     {
@@ -30,8 +31,16 @@ public static class ProductHtmlConverter
                 continue;
 
             string lookupKey = definition!.Localizable ? locale : string.Empty;
-            if (!product.GetLocalizedValues(propertyId).TryGetValue(lookupKey, out var values))
-                continue;
+            var localizedValues = product.GetLocalizedValues(propertyId);
+
+            if (!localizedValues.TryGetValue(lookupKey, out var values) || values.Count == 0)
+            {
+                if (!definition.Localizable) 
+                    continue;
+
+                if (!localizedValues.TryGetValue(defaultLocale, out values) || values.Count == 0) 
+                    continue;
+            }
 
             for (int index = 0; index < values.Count; index++)
             {

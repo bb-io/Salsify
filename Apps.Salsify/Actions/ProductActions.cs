@@ -4,7 +4,6 @@ using Apps.Salsify.Constants;
 using Apps.Salsify.Converters.Product;
 using Apps.Salsify.Extensions;
 using Apps.Salsify.Helpers;
-using Apps.Salsify.Helpers.Validation;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Entities.Properties;
 using Apps.Salsify.Models.Identifiers;
@@ -85,6 +84,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     {
         var current = await Client.GetCurrentOrgInfo();
         string locale = current.ResolveLocale(identifier.Locale);
+        string defaultLocale = current.DefaultLocaleId;
 
         var getProductRequest = new SalsifyRequest($"products/{productIdentifier.ProductId}");
         var product = await Client.ExecuteWithErrorHandling<ProductEntity>(getProductRequest);
@@ -96,6 +96,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
             product, 
             propertyDefinitions,
             locale, 
+            defaultLocale,
             includeNonLocalizable: downloadInput.OnlyLocalizableProperties is false, 
             downloadInput.ExcludeProperties);
         

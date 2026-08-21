@@ -53,10 +53,10 @@ public class ProductActionTests : TestBaseMultipleConnections
         // Arrange
         var actions = new ProductActions(context, FileManager);
         var identifier = new ProductIdentifier { ProductId = "partcodeid" };
-        var localeIdentifier = new LocaleOptionalIdentifier { Locale = "en-US" };
+        var localeIdentifier = new LocaleOptionalIdentifier { Locale = "fr-CA" };
         var downloadInput = new DownloadProductRequest
         {
-            OnlyLocalizableProperties = false,
+            OnlyLocalizableProperties = true,
         };
 
         // Act
