@@ -1,4 +1,6 @@
+using Apps.Salsify.Handlers.LookupTable;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using ClosedXML.Excel;
 
@@ -7,10 +9,8 @@ namespace Apps.Salsify.Models.Requests.LookupTable;
 public class DownloadLookupTableRequest
 {
     [Display("Column letters", Description = "Columns to translate, as they appear in Excel - A, B, AA. Case-insensitive")]
+    [DataSource(typeof(LookupTableColumnDataHandler))]
     public List<string> ColumnLetters { get; set; } = [];
-
-    [Display("Sheet name")]
-    public string SheetName { get; set; } = string.Empty;
     
     [Display("First row", Description = "Row to start from. Defaults to 2, which skips a single header row")]
     public int? FirstRow { get; set; }

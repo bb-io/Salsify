@@ -16,14 +16,14 @@ public class LookupTableActionTests : TestBaseMultipleConnections
         // Arrange
         var actions = new LookupTableActions(context, FileManager);
         var tableIdentifier = new LookupTableIdentifier { AssetId = "525787423bdbfe2d6cf7eec6a24d018f56f7ce9d" };
+        var sheetName = new LookupTableSheetNameIdentifier { SheetName = "Sheet1" };
         var downloadInput = new DownloadLookupTableRequest
         {
             ColumnLetters = ["c", "d", "b"],
-            SheetName = "Sheet1",
         };
 
         // Act
-        var result = await actions.DownloadLookupTable(tableIdentifier, downloadInput);
+        var result = await actions.DownloadLookupTable(tableIdentifier, sheetName, downloadInput);
         
         // Assert
         PrintFileResult(result.Content);
