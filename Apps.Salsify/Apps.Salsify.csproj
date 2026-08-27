@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <Product>Salsify [Beta]</Product>
         <Description>Salsify is a cloud-based PIM solution that helps brands manage product data and content for eCommerce channels</Description>
-        <Version>1.0.1</Version>
+        <Version>1.0.2</Version>
         <AssemblyName>Apps.Salsify</AssemblyName>
     </PropertyGroup>
 
