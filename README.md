@@ -69,6 +69,7 @@ Navigate to apps and search for Salsify. Click _Add connection_ and name your co
 
 - **Search products** Search for products using specific criteria. Fill in at least one advanced input field
 - **Get product** Get details for a specific product
+- **Get product property value** Get a specific property value of a product
 - **Download product** Download product content
 - **Upload product** Upload product content from a file
 - **Create product** Create a new product

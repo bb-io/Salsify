@@ -76,6 +76,37 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
     }
 
     // https://developers.salsify.com/reference/read-product-record
+    [Action("Get product property value", Description = "Get a specific property value of a product")]
+    public async Task<ProductPropertyValueResponse> GetProductPropertyValue(
+        [ActionParameter] ProductIdentifier productIdentifier,
+        [ActionParameter] PropertyIdentifier propertyIdentifier,
+        [ActionParameter] LocaleOptionalIdentifier identifier)
+    {
+        string productId = productIdentifier.ProductId;
+        string propertyId = propertyIdentifier.PropertyId;
+
+        var productRequest = new SalsifyRequest($"products/{productId}");
+        var product = await Client.ExecuteWithErrorHandling<ProductEntity>(productRequest);
+
+        var propertyRequest = new SalsifyRequest($"properties/{propertyId}");
+        var property = await Client.ExecuteWithErrorHandling<PropertyEntity>(propertyRequest);
+
+        string? locale = null;
+        if (property.Localizable)
+        {
+            var current = await Client.GetCurrentOrgInfo();
+            locale = current.ResolveLocale(identifier.Locale);
+        }
+        else if (!string.IsNullOrWhiteSpace(identifier.Locale))
+        {
+            string logMsg = $"Property '{propertyId}' is not localizable - the locale is ignored";
+            InvocationContext.Logger?.LogInformation(logMsg, []);
+        }
+
+        return new ProductPropertyValueResponse(product, property, locale);
+    }
+
+    // https://developers.salsify.com/reference/read-product-record
     [Action("Download product", Description = "Download product content")]
     public async Task<FileResponse> DownloadProduct(
         [ActionParameter] ProductIdentifier productIdentifier,
