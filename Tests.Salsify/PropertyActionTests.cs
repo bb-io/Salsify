@@ -92,8 +92,8 @@ public class PropertyActionTests : TestBaseMultipleConnections
     {
         // Arrange
         var actions = new PropertyActions(context, FileManager);
-        var picklistIdentifier = new PicklistIdentifier { PicklistId = "Material_LOC" };
-        var localeIdentifier = new LocaleOptionalIdentifier { Locale = "fr-CA" };
+        var picklistIdentifier = new PicklistIdentifier { PicklistId = "sinkType_LOC" };
+        var localeIdentifier = new LocaleOptionalIdentifier { Locale = "en-US" };
 
         // Act
         var result = await actions.DownloadPicklistValues(picklistIdentifier, localeIdentifier);

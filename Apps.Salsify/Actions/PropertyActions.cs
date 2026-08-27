@@ -204,7 +204,7 @@ public class PropertyActions(InvocationContext invocationContext, IFileManagemen
         var request = new GraphQlRequest("EnumeratedValues", GraphQlQueries.EnumeratedValues, new
         {
             propertyId = picklistId,
-            flatten = true,
+            flatten = false, //Changed from true to false, due to conversion errors
             contentLocalesCodes = locales
         });
         
