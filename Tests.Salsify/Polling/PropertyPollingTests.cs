@@ -1,11 +1,11 @@
 using Apps.Salsify.Events.Polling;
-using Apps.Salsify.Events.Polling.Models;
+using Apps.Salsify.Events.Polling.Models.Memory;
 using Apps.Salsify.Events.Polling.Models.Request.Property;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
 using Tests.Salsify.Base;
 
-namespace Tests.Salsify;
+namespace Tests.Salsify.Polling;
 
 [TestClass]
 public class PropertyPollingTests : TestBaseMultipleConnections
@@ -15,8 +15,8 @@ public class PropertyPollingTests : TestBaseMultipleConnections
     {
         // Arrange
         var polling = new PropertyPollingList(context);
-        var memory = new PollingMemory { LastPollingTime = DateTime.UtcNow - TimeSpan.FromMinutes(1) };
-        var request = new PollingEventRequest<PollingMemory> { Memory = memory };
+        var memory = new DateMemory { LastPollingTime = DateTime.UtcNow - TimeSpan.FromMinutes(1) };
+        var request = new PollingEventRequest<DateMemory> { Memory = memory };
         var input = new OnPropertyCreatedOrUpdatedRequest { };
 
         // Act
