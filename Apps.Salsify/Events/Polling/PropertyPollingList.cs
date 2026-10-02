@@ -1,6 +1,6 @@
 using Apps.Salsify.Api;
 using Apps.Salsify.Constants.GraphQl;
-using Apps.Salsify.Events.Polling.Models;
+using Apps.Salsify.Events.Polling.Models.Memory;
 using Apps.Salsify.Events.Polling.Models.Request.Property;
 using Apps.Salsify.Events.Polling.Models.Response.Property;
 using Apps.Salsify.Events.Polling.Models.Response.Property.Api;
@@ -15,8 +15,8 @@ namespace Apps.Salsify.Events.Polling;
 public class PropertyPollingList(InvocationContext invocationContext) : SalsifyInvocable(invocationContext)
 {
     [PollingEvent("On property created or updated", Description = "Triggered when a property is created or its definition is updated")]
-    public async Task<PollingEventResponse<PollingMemory, OnPropertyCreatedOrUpdatedResponse>> OnPropertyCreatedOrUpdated(
-        PollingEventRequest<PollingMemory> pollingRequest,
+    public async Task<PollingEventResponse<DateMemory, OnPropertyCreatedOrUpdatedResponse>> OnPropertyCreatedOrUpdated(
+        PollingEventRequest<DateMemory> pollingRequest,
         [PollingEventParameter] OnPropertyCreatedOrUpdatedRequest input)
     {
         // Salsify timestamps are second-precision so a sub-second cursor can skip changes made later in the same second
@@ -24,7 +24,7 @@ public class PropertyPollingList(InvocationContext invocationContext) : SalsifyI
         var pollingStartTime = DateTime.UtcNow.AddSeconds(-1);
         
         if (pollingRequest.Memory?.LastPollingTime is null)
-            return PollingResult.Baseline<OnPropertyCreatedOrUpdatedResponse>(pollingStartTime);
+            return PollingResult.DoNotFly<OnPropertyCreatedOrUpdatedResponse>(pollingStartTime);
 
         var request = new GraphQlRequest("PropertyIndexPolling", GraphQlQueries.PropertyIndexPolling, new
         {
@@ -37,6 +37,6 @@ public class PropertyPollingList(InvocationContext invocationContext) : SalsifyI
         
         return filtered.Count > 0
             ? PollingResult.Fly(result, pollingStartTime)
-            : PollingResult.NoChanges<OnPropertyCreatedOrUpdatedResponse>(pollingStartTime);
+            : PollingResult.DoNotFly<OnPropertyCreatedOrUpdatedResponse>(pollingStartTime);
     }
 }
