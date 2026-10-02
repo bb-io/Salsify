@@ -6,12 +6,13 @@
         <Nullable>enable</Nullable>
         <Product>Salsify [Beta]</Product>
         <Description>Salsify is a cloud-based PIM solution that helps brands manage product data and content for eCommerce channels</Description>
-        <Version>1.0.3</Version>
+        <Version>1.0.4</Version>
         <AssemblyName>Apps.Salsify</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Blackbird.Applications.SDK.Blueprints" Version="1.0.2" />
+        <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.17.0" />
         <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.1.0" />
         <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.1.0-rc.8709" />
         <PackageReference Include="Blackbird.Filters" Version="1.2.16" />

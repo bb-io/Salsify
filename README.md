@@ -89,7 +89,7 @@ Navigate to apps and search for Salsify. Click _Add connection_ and name your co
 
 > **Important!**
 >
-> Product and asset events are webhook-based. After you publish a bird that uses one, 
+> Asset events and some product events are webhook-based. After you publish a bird that uses one, 
 > Salsify needs a few minutes (around three) to activate the subscription. 
 > Any changes made during that window will not trigger the bird. 
 > You can check progress under **Subscriptions** in your Salsify profile settings - the
@@ -104,6 +104,7 @@ Navigate to apps and search for Salsify. Click _Add connection_ and name your co
 
 - **On product updated** Triggered when a product is updated
 - **On product created** Triggered when a product is created
+- **On product added to list** Triggered when a product is added to a specific list
 
 ### Properties
 
