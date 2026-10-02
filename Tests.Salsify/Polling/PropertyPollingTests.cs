@@ -1,12 +1,11 @@
 using Apps.Salsify.Events.Polling;
-using Apps.Salsify.Events.Polling.Models;
 using Apps.Salsify.Events.Polling.Models.Memory;
 using Apps.Salsify.Events.Polling.Models.Request.Property;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
 using Tests.Salsify.Base;
 
-namespace Tests.Salsify;
+namespace Tests.Salsify.Polling;
 
 [TestClass]
 public class PropertyPollingTests : TestBaseMultipleConnections
