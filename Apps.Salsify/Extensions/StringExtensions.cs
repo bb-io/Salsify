@@ -21,4 +21,12 @@ public static class StringExtensions
     }
     
     public static string ToUtf8String(this byte[] bytes) => Encoding.UTF8.GetString(bytes).TrimStart('\uFEFF');
+
+    public static bool IsSpreadsheetUrl(this string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) 
+            return false;
+
+        return Path.GetExtension(uri.AbsolutePath).Equals(".xlsx", StringComparison.OrdinalIgnoreCase);
+    }
 }
