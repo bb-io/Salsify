@@ -85,6 +85,11 @@ Navigate to apps and search for Salsify. Click _Add connection_ and name your co
 - **Download picklist property values** Download picklist property values as HTML file
 - **Upload picklist property values** Upload picklist property values from a file
 
+### Lists
+
+- **Add product to list** Add a product to a specific list
+- **Remove product from list** Remove a product from a specific list
+
 ## Events
 
 > **Important!**
