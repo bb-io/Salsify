@@ -18,4 +18,16 @@ public static class GraphQlMutations
           }
         }
         """;
+    
+    public const string AddProductToList =
+        """
+        mutation AddProductToListMutation($input: AddRecordToListInput!) {
+          addRecordToList(input: $input) {
+            list {
+              id
+              name
+            }
+          }
+        }
+        """;
 }
