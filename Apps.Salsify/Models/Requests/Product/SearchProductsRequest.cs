@@ -22,7 +22,7 @@ public class SearchProductsRequest : IUpdatedDateRangeFilter
     [Display("Name contains")]
     public string? NameContains { get; set; }
     
-    [Display("Product list ID"), DataSource(typeof(ProductListIdDataHandler))]
+    [Display("Product list ID"), DataSource(typeof(AnyProductListIdDataHandler))]
     public string? ListId { get; set; }
 
     [Display("Property names"), DataSource(typeof(PropertyDataHandler))]

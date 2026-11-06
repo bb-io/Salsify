@@ -6,6 +6,6 @@ namespace Apps.Salsify.Models.Identifiers;
 
 public class ProductListIdentifier
 {
-    [Display("Product list ID"), DataSource(typeof(ProductListIdDataHandler))]
+    [Display("Product list ID"), DataSource(typeof(SimpleProductListIdDataHandler))]
     public string ProductListId { get; set; } = string.Empty;
 }

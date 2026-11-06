@@ -6,6 +6,6 @@ namespace Apps.Salsify.Events.Polling.Models.Request.Product;
 
 public class OnProductAddedToListRequest
 {   
-    [Display("Product list ID"), DataSource(typeof(ProductListIdDataHandler))]
+    [Display("Product list ID"), DataSource(typeof(AnyProductListIdDataHandler))]
     public string ProductListId { get; set; } = string.Empty;
 }
