@@ -12,12 +12,13 @@ namespace Apps.Salsify.Handlers.List;
 public abstract class BaseListDataHandler(InvocationContext context) : SalsifyInvocable(context)
 {
     protected abstract string ListEntityType { get; }
+    protected virtual string? ListType { get; }
 
     protected async Task<IEnumerable<DataSourceItem>> GetListItems(DataSourceContext context, Func<ListEntity, string> idSelector)
     {
         var request = new SalsifyRequest("lists", Method.Get, ApiVersion.Unversioned)
             .AddQueryParameter("entity_type", ListEntityType)
-            .AddQueryParameter("type", "simple")
+            .AddQueryParameterIfNotEmpty("type", ListType)
             .AddQueryParameterIfNotEmpty("query", context.SearchString);
 
         var response = await Client.PaginateOffset<ListListsResponse, ListEntity>(request, paginateTimes: 2);
