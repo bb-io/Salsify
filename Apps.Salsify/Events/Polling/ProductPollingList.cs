@@ -22,9 +22,7 @@ public class ProductPollingList(InvocationContext invocationContext) : SalsifyIn
         PollingEventRequest<ProductIdsMemory> pollingRequest,
         [PollingEventParameter] OnProductAddedToListRequest input)
     {
-        Filter?[] query = [Filter.InList(input.ProductListId)];
-        var productsRequest = new SalsifyRequest("products").AddQueryParameter("filter", Filter.Build(query));
-        var products = await Client.PaginateCursor<ListProductsResponse, ProductEntity>(productsRequest);
+        var products = await GetProductsInList(input.ProductListId);
 
         var memory = new ProductIdsMemory(products.Select(x => x.SystemId).ToArray());
         if (pollingRequest.Memory is null)
@@ -40,4 +38,28 @@ public class ProductPollingList(InvocationContext invocationContext) : SalsifyIn
             ? PollingResult.Fly(memory, newProducts)
             : PollingResult.DoNotFly<ProductIdsMemory, List<ProductResponse>>(memory);
     }
+    
+    [MultipleEvents] 
+    [PollingEvent("On product in list", 
+        Description = "Triggered on every check with all products currently in the list, whether anything changed")]
+    public async Task<PollingEventResponse<EmptyMemory, List<ProductResponse>>> OnProductInList(
+        PollingEventRequest<EmptyMemory> pollingRequest,
+        [PollingEventParameter] OnProductAddedToListRequest input)
+    {
+        var emptyMemory = new EmptyMemory();
+
+        var products = await GetProductsInList(input.ProductListId);
+        if (products.Count == 0)
+            return PollingResult.DoNotFly<EmptyMemory, List<ProductResponse>>(emptyMemory);
+
+        var responses = products.Select(x => new ProductResponse(x)).ToList();
+        return PollingResult.Fly(emptyMemory, responses);
+    }
+
+    private Task<List<ProductEntity>> GetProductsInList(string listId)
+    {
+        Filter?[] query = [Filter.InList(listId)];
+        var productsRequest = new SalsifyRequest("products").AddQueryParameter("filter", Filter.Build(query));
+        return Client.PaginateCursor<ListProductsResponse, ProductEntity>(productsRequest);
+    } 
 }

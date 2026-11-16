@@ -110,6 +110,7 @@ Navigate to apps and search for Salsify. Click _Add connection_ and name your co
 - **On product updated** Triggered when a product is updated
 - **On product created** Triggered when a product is created
 - **On product added to list** Triggered when a product is added to a specific list
+- **On product in list** Triggered on every check with all products currently in the list, whether anything changed
 
 ### Properties
 

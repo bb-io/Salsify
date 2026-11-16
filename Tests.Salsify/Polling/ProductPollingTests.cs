@@ -11,7 +11,7 @@ namespace Tests.Salsify.Polling;
 public class ProductPollingTests : TestBaseMultipleConnections
 {
     [TestMethod, TargetConnections]
-    public async Task OnPropertyCreatedOrUpdated_ReturnsProperties(InvocationContext context)
+    public async Task OnProductAddedToList_IsSuccess(InvocationContext context)
     {
         // Arrange
         var polling = new ProductPollingList(context);
@@ -41,6 +41,23 @@ public class ProductPollingTests : TestBaseMultipleConnections
 
         // Assert
         PrintResult(result);
+        Assert.IsNotNull(result);
+    }
+    
+    [TestMethod, TargetConnections]
+    public async Task OnProductInList_IsSuccess(InvocationContext context)
+    {
+        // Arrange
+        var polling = new ProductPollingList(context);
+        var request = new PollingEventRequest<EmptyMemory> { Memory = new EmptyMemory() };
+        var input = new OnProductAddedToListRequest { ProductListId = "1237442" };
+
+        // Act
+        var result = await polling.OnProductInList(request, input);
+
+        // Assert
+        TestContext.WriteLine($"Count: {result.Result!.Count}");
+        PrintResult(result.Result!);
         Assert.IsNotNull(result);
     }
 }
