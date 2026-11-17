@@ -49,10 +49,6 @@ public class ProductPollingList(InvocationContext invocationContext) : SalsifyIn
     {
         var emptyMemory = new EmptyMemory();
 
-        if (input.Limit is <= 0)
-            throw new ArgumentOutOfRangeException(nameof(input.Limit),
-                "Limit must be greater than zero.");
-
         var products = await GetProductsInList(input.ProductListId);
 
         if (input.Limit.HasValue)
