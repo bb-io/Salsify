@@ -16,7 +16,7 @@ namespace Apps.Salsify.Events.Polling;
 [PollingEventList("Products")]
 public class ProductPollingList(InvocationContext invocationContext) : SalsifyInvocable(invocationContext)
 {
-    [MultipleEvents] 
+    [MultipleEvents]
     [PollingEvent("On product added to list", Description = "Triggered when a product is added to a specific list")]
     public async Task<PollingEventResponse<ProductIdsMemory, List<ProductResponse>>> OnProductAddedToList(
         PollingEventRequest<ProductIdsMemory> pollingRequest,
@@ -38,28 +38,33 @@ public class ProductPollingList(InvocationContext invocationContext) : SalsifyIn
             ? PollingResult.Fly(memory, newProducts)
             : PollingResult.DoNotFly<ProductIdsMemory, List<ProductResponse>>(memory);
     }
-    
-    [MultipleEvents] 
-    [PollingEvent("On product in list", 
+
+
+    [MultipleEvents]
+    [PollingEvent("On product in list",
         Description = "Triggered on every check with all products currently in the list, whether anything changed")]
     public async Task<PollingEventResponse<EmptyMemory, List<ProductResponse>>> OnProductInList(
         PollingEventRequest<EmptyMemory> pollingRequest,
-        [PollingEventParameter] OnProductAddedToListRequest input)
+        [PollingEventParameter] OnProductInListRequest input)
     {
         var emptyMemory = new EmptyMemory();
 
         var products = await GetProductsInList(input.ProductListId);
+
+        if (input.Limit.HasValue)
+            products = products.Take(input.Limit.Value).ToList();
+
         if (products.Count == 0)
             return PollingResult.DoNotFly<EmptyMemory, List<ProductResponse>>(emptyMemory);
 
         var responses = products.Select(x => new ProductResponse(x)).ToList();
         return PollingResult.Fly(emptyMemory, responses);
     }
-
     private Task<List<ProductEntity>> GetProductsInList(string listId)
     {
         Filter?[] query = [Filter.InList(listId)];
         var productsRequest = new SalsifyRequest("products").AddQueryParameter("filter", Filter.Build(query));
         return Client.PaginateCursor<ListProductsResponse, ProductEntity>(productsRequest);
-    } 
+    }
+
 }

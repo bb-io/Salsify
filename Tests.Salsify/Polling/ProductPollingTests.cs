@@ -50,7 +50,7 @@ public class ProductPollingTests : TestBaseMultipleConnections
         // Arrange
         var polling = new ProductPollingList(context);
         var request = new PollingEventRequest<EmptyMemory> { Memory = new EmptyMemory() };
-        var input = new OnProductAddedToListRequest { ProductListId = "1237442" };
+        var input = new OnProductInListRequest { ProductListId = "1237442" };
 
         // Act
         var result = await polling.OnProductInList(request, input);
