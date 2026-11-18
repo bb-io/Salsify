@@ -51,7 +51,7 @@ public class ProductActionTests : TestBaseMultipleConnections
     }
 
     [TestMethod, TargetConnections]
-    public async Task DownloadProduct_IsSuccess(InvocationContext context)
+    public async Task DownloadProduct_WithContent_ReturnsContent(InvocationContext context)
     {
         // Arrange
         var actions = new ProductActions(context, FileManager);
@@ -68,6 +68,25 @@ public class ProductActionTests : TestBaseMultipleConnections
         // Assert
         Assert.IsNotNull(result.Content);
         TestContext.WriteLine(result.Content.Name);
+    }
+
+    [TestMethod, TargetConnections]
+    public async Task DownloadProduct_WithoutContent_ReturnsNull(InvocationContext context)
+    {
+        // Arrange
+        var actions = new ProductActions(context, FileManager);
+        var identifier = new ProductIdentifier { ProductId = "123" };
+        var localeIdentifier = new LocaleOptionalIdentifier { Locale = "fr-CA" };
+        var downloadInput = new DownloadProductRequest
+        {
+            OnlyLocalizableProperties = true,
+        };
+
+        // Act
+        var result = await actions.DownloadProduct(identifier, downloadInput, localeIdentifier);
+
+        // Assert
+        Assert.IsNull(result.Content);
     }
 
     [TestMethod, TargetConnections]

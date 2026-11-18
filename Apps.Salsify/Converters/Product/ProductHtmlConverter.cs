@@ -3,14 +3,13 @@ using Apps.Salsify.Constants;
 using Apps.Salsify.Converters.Product.Models;
 using Apps.Salsify.Models.Entities.Product;
 using Apps.Salsify.Models.Entities.Properties;
-using Blackbird.Applications.Sdk.Common.Exceptions;
 using HtmlAgilityPack;
 
 namespace Apps.Salsify.Converters.Product;
 
 public static class ProductHtmlConverter
 {
-    public static HtmlDocument GenerateHtml(
+    public static HtmlDocument? GenerateHtml(
         ProductEntity product,
         IReadOnlyDictionary<string, PropertyEntity> definitions,
         ProductHtmlOptions options)
@@ -52,14 +51,7 @@ public static class ProductHtmlConverter
             }
         }
 
-        if (emitted > 0) 
-            return doc;
-
-        string filterHint = options.ExcludeProperties.Count != 0 || options.IncludeProperties.Count != 0
-            ? "Check the 'Include properties' and 'Exclude properties' inputs"
-            : string.Empty;
-
-        throw new PluginMisconfigurationException($"Product '{product.Id}' has no translatable content for {options.Locale}. {filterHint}");
+        return emitted > 0 ? doc : null;
     }
 
     private static bool PropertyIsEligible(PropertyEntity? definition, bool includeNonLocalizable)

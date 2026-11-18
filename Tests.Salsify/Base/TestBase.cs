@@ -35,12 +35,4 @@ public class TestBase
     {
         FileManager = new FileManager();
     }
-    
-    public InvocationContext GetInvocationContext(string connectionType)
-    {
-        var context = InvocationContexts.FirstOrDefault(x => 
-            x.AuthenticationCredentialsProviders.Any(y => y.Value == connectionType));
-            
-        return context ?? throw new Exception($"Invocation context not found for: {connectionType}");
-    }
 }

@@ -108,7 +108,7 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
 
     // https://developers.salsify.com/reference/read-product-record
     [Action("Download product", Description = "Download product content")]
-    public async Task<FileResponse> DownloadProduct(
+    public async Task<NullableFileResponse> DownloadProduct(
         [ActionParameter] ProductIdentifier productIdentifier,
         [ActionParameter] DownloadProductRequest downloadInput,
         [ActionParameter] LocaleOptionalIdentifier identifier)
@@ -131,6 +131,16 @@ public class ProductActions(InvocationContext context, IFileManagementClient fil
             IncludeNonLocalizable = downloadInput.OnlyLocalizableProperties is false
         };
         var doc = ProductHtmlConverter.GenerateHtml(product, propertyDefinitions, htmlOptions);
+        if (doc is null)
+        {
+            string filterHint = htmlOptions.ExcludeProperties.Count != 0 || htmlOptions.IncludeProperties.Count != 0
+                ? "Check the 'Include properties' and 'Exclude properties' inputs"
+                : string.Empty;
+
+            string warningMsg = $"Product '{product.Id}' has no translatable content for {htmlOptions.Locale}. {filterHint}";
+            InvocationContext.Logger?.LogWarning(warningMsg, []);
+            return new NullableFileResponse(null);
+        }
         
         string? nameProperty = current.GetRolePropertyId(RolePropertyNames.ProductName);
         string? productName = nameProperty is null ? null : product.GetValue(nameProperty);
