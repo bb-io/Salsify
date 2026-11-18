@@ -98,16 +98,17 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         return _current;
     }
     
-    public override async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)
+    public override Task<T> ExecuteWithErrorHandling<T>(RestRequest request)
     {
         PrepareRequest(request);
-        return await base.ExecuteWithErrorHandling<T>(request);
+        return base.ExecuteWithErrorHandling<T>(request);
     }
     
-    public override Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
+    public override async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
     {
         PrepareRequest(request);
-        return base.ExecuteWithErrorHandling(request);
+        RestResponse response = await Retry.Pipeline.ExecuteAsync(async token => await ExecuteAsync(request, token));
+        return response.IsSuccessStatusCode ? response : throw ConfigureErrorException(response);
     }
 
     protected override Exception ConfigureErrorException(RestResponse response)
