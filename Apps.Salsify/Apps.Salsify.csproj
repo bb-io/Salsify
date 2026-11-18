@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <Product>Salsify [Beta]</Product>
         <Description>Salsify is a cloud-based PIM solution that helps brands manage product data and content for eCommerce channels</Description>
-        <Version>1.0.9</Version>
+        <Version>1.0.10</Version>
         <AssemblyName>Apps.Salsify</AssemblyName>
     </PropertyGroup>
 
@@ -15,13 +15,14 @@
         <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.17.0" />
         <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.1.0" />
         <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.1.0-rc.8709" />
-        <PackageReference Include="Blackbird.Filters" Version="1.2.16" />
+        <PackageReference Include="Blackbird.Filters" Version="1.3.11" />
         <PackageReference Include="ClosedXML" Version="0.105.1" />
+        <PackageReference Include="Polly" Version="8.9.1" />
     </ItemGroup>
 
     <ItemGroup>
         <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png" />
-        <EmbeddedResource CopyToOutputDirectory="Always" Include="..\README.md"/>
+        <EmbeddedResource Include="..\README.md" Link="README.md" CopyToOutputDirectory="Always" />
     </ItemGroup>
 
 </Project>
