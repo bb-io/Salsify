@@ -76,9 +76,8 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
             if (string.IsNullOrEmpty(cursor))
                 break;
 
-            // Not a user-facing error, that's why it's just Exception
             if (!seen.Add(cursor))
-                throw new Exception($"Pagination stalled: cursor '{cursor}' was returned twice after {all.Count} items.");
+                throw new PluginApplicationException($"Pagination stalled: cursor '{cursor}' was returned twice after {all.Count} items");
         }
 
         return all;
@@ -111,16 +110,26 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         string statusCodePart = $"Status code {response.StatusCode} ({(int)response.StatusCode}).";
         if (string.IsNullOrWhiteSpace(response.Content))
             return new PluginApplicationException($"{statusCodePart} Server returned no content");
+
+        try
+        {
+            var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
+            string? singleError = error?.Error;
+            string? multipleErrors = string.Join("; ", error?.Errors ?? []);
+
+            if (!string.IsNullOrWhiteSpace(singleError))
+                return new PluginApplicationException(singleError);
+
+            if (!string.IsNullOrWhiteSpace(multipleErrors))
+                return new PluginApplicationException(multipleErrors);
+        }
+        catch (JsonException)
+        {
+            // Handled below
+        }
         
-        var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
-        string? singleError = error?.Error;
-        string? multipleErrors = string.Join("; ", error?.Errors ?? []);
-        
-        if (!string.IsNullOrWhiteSpace(singleError))
-            return new PluginApplicationException(singleError);
-        if (!string.IsNullOrWhiteSpace(multipleErrors))
-            return new PluginApplicationException(multipleErrors);
-        return new PluginApplicationException($"{statusCodePart} Could not deserialize error. Raw: {response.Content}");
+        string raw = response.Content[..Math.Min(300, response.Content.Length)];
+        return new PluginApplicationException($"{statusCodePart} Could not deserialize error. Raw: {raw}");
     }
 
     private void PrepareRequest(RestRequest request)
