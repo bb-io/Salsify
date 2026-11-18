@@ -51,18 +51,23 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
         return all;
     }
     
-    public async Task<List<TItem>> PaginateCursor<TResponse, TItem>(RestRequest request, int? paginateTimes = null)
+    public async Task<List<TItem>> PaginateCursor<TResponse, TItem>(RestRequest request, int? paginateTimes = null, int? maxItems = null)
         where TResponse : PaginatedResponse<TItem>
     {
         var all = new List<TItem>();
-        int limit = paginateTimes ?? 100;
-        var seen = new HashSet<string>(StringComparer.Ordinal);
+        int maxPagesLimit = paginateTimes ?? 100;
+        var seenSet = new HashSet<string>(StringComparer.Ordinal);
         
-        request.AddOrUpdateParameter(new QueryParameter("per_page", "100"));
         string? cursor = null;
 
-        for (var i = 0; i < limit; i++)
+        for (var i = 0; i < maxPagesLimit; i++)
         {
+            if (maxItems.HasValue && all.Count >= maxItems.Value)
+                break;
+            
+            int perPage = maxItems.HasValue ? Math.Min(100, maxItems.Value - all.Count) : 100;
+            request.AddOrUpdateParameter(new QueryParameter("per_page", perPage.ToString()));
+            
             if (!string.IsNullOrEmpty(cursor))
                 request.AddOrUpdateParameter(new QueryParameter("cursor", cursor));
 
@@ -76,11 +81,11 @@ public class SalsifyClient(IEnumerable<AuthenticationCredentialsProvider> creds)
             if (string.IsNullOrEmpty(cursor))
                 break;
 
-            if (!seen.Add(cursor))
+            if (!seenSet.Add(cursor))
                 throw new PluginApplicationException($"Pagination stalled: cursor '{cursor}' was returned twice after {all.Count} items");
         }
 
-        return all;
+        return maxItems.HasValue ? all.Take(maxItems.Value).ToList() : all;
     }
 
     public async Task<CurrentResponse> GetCurrentOrgInfo()

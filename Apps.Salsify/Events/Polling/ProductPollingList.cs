@@ -39,7 +39,6 @@ public class ProductPollingList(InvocationContext invocationContext) : SalsifyIn
             : PollingResult.DoNotFly<ProductIdsMemory, List<ProductResponse>>(memory);
     }
 
-
     [MultipleEvents]
     [PollingEvent("On product in list",
         Description = "Triggered on every check with all products currently in the list, whether anything changed")]
@@ -49,10 +48,7 @@ public class ProductPollingList(InvocationContext invocationContext) : SalsifyIn
     {
         var emptyMemory = new EmptyMemory();
 
-        var products = await GetProductsInList(input.ProductListId);
-
-        if (input.Limit.HasValue)
-            products = products.Take(input.Limit.Value).ToList();
+        var products = await GetProductsInList(input.ProductListId, input.Limit);
 
         if (products.Count == 0)
             return PollingResult.DoNotFly<EmptyMemory, List<ProductResponse>>(emptyMemory);
@@ -60,11 +56,11 @@ public class ProductPollingList(InvocationContext invocationContext) : SalsifyIn
         var responses = products.Select(x => new ProductResponse(x)).ToList();
         return PollingResult.Fly(emptyMemory, responses);
     }
-    private Task<List<ProductEntity>> GetProductsInList(string listId)
+    
+    private Task<List<ProductEntity>> GetProductsInList(string listId, int? maxItems = null)
     {
         Filter?[] query = [Filter.InList(listId)];
         var productsRequest = new SalsifyRequest("products").AddQueryParameter("filter", Filter.Build(query));
-        return Client.PaginateCursor<ListProductsResponse, ProductEntity>(productsRequest);
+        return Client.PaginateCursor<ListProductsResponse, ProductEntity>(productsRequest, maxItems: maxItems);
     }
-
 }
